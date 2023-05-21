@@ -1,0 +1,3 @@
+[submodule "submodules/ultraglobe"]
+	path = submodules/ultraglobe
+	url = git@github.com:snowzurfer/UltraGlobe.git

@@ -9,9 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@types/node": "20.2.1",
-    "@types/react": "18.2.6",
-    "@types/react-dom": "18.2.4",
+    "@react-three/fiber": "^8.13.0",
     "autoprefixer": "10.4.14",
     "eslint": "8.41.0",
     "eslint-config-next": "13.4.3",
@@ -20,6 +18,13 @@
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "tailwindcss": "3.3.2",
+    "three": "^0.152.2",
     "typescript": "5.0.4"
+  },
+  "devDependencies": {
+    "@types/node": "20.2.1",
+    "@types/react": "18.2.6",
+    "@types/react-dom": "18.2.4",
+    "@types/three": "^0.152.0"
   }
 }
