@@ -11,10 +11,15 @@ import {
   Raycaster,
   SphereGeometry,
   Vector2,
-  Vector3,
 } from "three";
 
-export const UltraMeshGlobe: FunctionComponent = () => {
+export interface Props {
+  setHasClickedOnce: (hasClickedOnce: boolean) => void;
+}
+
+export const UltraMeshGlobe: FunctionComponent<Props> = ({
+  setHasClickedOnce,
+}) => {
   const divRef = useRef<HTMLDivElement>(null);
 
   const mapRef = useRef<Map>();
@@ -46,18 +51,19 @@ export const UltraMeshGlobe: FunctionComponent = () => {
     const ceObject = map.scene.children.find(
       (child: Object3D) => child.constructor.name === "ce"
     );
-    if (ceObject) {
-      raycaster.layers.enable(ceObject.layers.mask);
+    if (!ceObject) {
+      throw new Error("Couldn't find ceObject");
     }
+    raycaster.layers.enable(ceObject.layers.mask);
 
     if (map.selectController) {
       map.selectController.selectCallback = (mouseUpLocation: Vector2) => {
+        setHasClickedOnce(true);
         // Create a sphere colored white at the location of the debug one
         const geom = new SphereGeometry(5);
         const mesh = new Mesh(geom);
         mesh.position.copy(debugSphereMesh.position);
-        // Pick a random, solid and nice color
-        // mesh.material = new MeshBasicMaterial({ color: "white" });
+        // Pick a random, solid and nice color, but make it vary a lot
         mesh.material = new MeshBasicMaterial({
           color: `hsl(${Math.random() * 360}, 100%, 50%)`,
         });
@@ -82,6 +88,13 @@ export const UltraMeshGlobe: FunctionComponent = () => {
       if (firstIntersection) {
         debugSphereMesh.position.copy(firstIntersection.point);
       }
+
+      // Make the spheres be at a constant size, based on the distance from the camera
+      const cameraPosition = camera.position;
+      spheres.forEach((sphere) => {
+        const distance = sphere.position.distanceTo(cameraPosition);
+        sphere.scale.setScalar(distance / 1000);
+      });
     };
     mapRef.current = map;
 
@@ -99,7 +112,6 @@ export const UltraMeshGlobe: FunctionComponent = () => {
     />
   );
 };
-
 
 // Lefover code from debugging
 
