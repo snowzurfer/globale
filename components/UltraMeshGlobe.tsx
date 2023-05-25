@@ -35,6 +35,7 @@ export const UltraMeshGlobe: FunctionComponent<Props> = ({
       apiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
       loadOutsideView: true,
       displayCopyright: true,
+      geometricErrorMultiplier: 3
     });
     map.setLayer(googleMaps3DTiles, 0);
 
