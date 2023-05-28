@@ -1,16 +1,19 @@
 "use client"; // This is a client component 👈🏽
 
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Map } from "@submodules/ultraglobe/src/Map";
 import { GoogleMap3DTileLayer } from "@submodules/ultraglobe/src/layers/GoogleMap3DTileLayer";
 
 import { FunctionComponent, useEffect, useRef } from "react";
 import {
+  Color,
   Mesh,
   MeshBasicMaterial,
   Object3D,
   Raycaster,
   SphereGeometry,
   Vector2,
+  Vector3,
 } from "three";
 
 export interface Props {
@@ -20,14 +23,14 @@ export interface Props {
 export const UltraMeshGlobe: FunctionComponent<Props> = ({
   setHasClickedOnce,
 }) => {
-  const divRef = useRef<HTMLDivElement>(null);
+  const camera = useThree((state) => state.camera);
+  const scene = useThree((state) => state.scene);
+  const glRenderer = useThree((state) => state.gl);
 
-  const mapRef = useRef<Map>();
+  const ultraglobeMapRef = useRef<Map>();
 
   useEffect(() => {
-    if (!divRef.current) return;
-
-    let map = new Map({ divID: "ultrameshDiv" });
+    let map = new Map({ renderer: glRenderer, scene, camera });
     var googleMaps3DTiles = new GoogleMap3DTileLayer({
       id: 0,
       name: "Google Maps 3D Tiles",
@@ -35,7 +38,7 @@ export const UltraMeshGlobe: FunctionComponent<Props> = ({
       apiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
       loadOutsideView: true,
       displayCopyright: true,
-      geometricErrorMultiplier: 3
+      geometricErrorMultiplier: 3,
     });
     map.setLayer(googleMaps3DTiles, 0);
 
@@ -73,44 +76,74 @@ export const UltraMeshGlobe: FunctionComponent<Props> = ({
       };
     }
 
-    map.animateCallback = () => {
-      const camera = map.camera;
-      const selectController = map.selectController;
-      if (!camera || !selectController || !ceObject) return;
-      // Convert to 2D NDC
-      const mousePosition = new Vector2(
-        (selectController.mousePosition.x / window.innerWidth) * 2 - 1,
-        -(selectController.mousePosition.y / window.innerHeight) * 2 + 1
-      );
+    // map.animateCallback = () => {
+    //   const camera = map.camera;
+    //   const selectController = map.selectController;
+    //   if (!camera || !selectController || !ceObject) return;
+    //   // Convert to 2D NDC
+    //   const mousePosition = new Vector2(
+    //     (selectController.mousePosition.x / window.innerWidth) * 2 - 1,
+    //     -(selectController.mousePosition.y / window.innerHeight) * 2 + 1
+    //   );
 
-      raycaster.setFromCamera(mousePosition, camera);
-      const intersects = raycaster.intersectObject(ceObject);
-      const firstIntersection = intersects[0];
-      if (firstIntersection) {
-        debugSphereMesh.position.copy(firstIntersection.point);
-      }
+    //   raycaster.setFromCamera(mousePosition, camera);
+    //   const intersects = raycaster.intersectObject(ceObject);
+    //   const firstIntersection = intersects[0];
+    //   if (firstIntersection) {
+    //     debugSphereMesh.position.copy(firstIntersection.point);
+    //   }
 
-      // Make the spheres be at a constant size, based on the distance from the camera
-      const cameraPosition = camera.position;
-      spheres.forEach((sphere) => {
-        const distance = sphere.position.distanceTo(cameraPosition);
-        sphere.scale.setScalar(distance / 1000);
-      });
-    };
-    mapRef.current = map;
+    //   // Make the spheres be at a constant size, based on the distance from the camera
+    //   const cameraPosition = camera.position;
+    //   spheres.forEach((sphere) => {
+    //     const distance = sphere.position.distanceTo(cameraPosition);
+    //     sphere.scale.setScalar(distance / 1000);
+    //   });
+    // };
+
+    ultraglobeMapRef.current = map;
 
     console.log("Setup");
-  }, []);
+  }, [camera, glRenderer, scene, setHasClickedOnce]);
 
+  useFrame((state, delta) => {
+    const ultraglobeMap = ultraglobeMapRef.current;
+    if (!ultraglobeMap) return;
+
+    ultraglobeMap.update();
+  });
+
+  return null;
+};
+
+export const ThreeScene: FunctionComponent = () => {
   return (
-    <div
-      id="ultrameshDiv"
-      onContextMenu={(e) => {
-        e.preventDefault();
+    <Canvas
+      // These arguments are all copied over from UltraGlobe
+      camera={{
+        position: [40000000, 0, 0],
+        up: [0, 0, 1],
+        far: 50000000,
+        near: 0.01,
+        fov: 30,
       }}
-      ref={divRef}
-      className="w-full h-full"
-    />
+      gl={{
+        autoClear: false,
+        preserveDrawingBuffer: false,
+        // This is important
+        logarithmicDepthBuffer: true,
+      }}
+      onCreated={(state) => {
+        const scene = state.scene;
+        if (!scene) return;
+
+        // We do this rather than using the `scene` prop because by doing
+        // that it doesn't stick.
+        scene.background = new Color(0x000000);
+      }}
+    >
+      <UltraMeshGlobe setHasClickedOnce={() => {}} />
+    </Canvas>
   );
 };
 

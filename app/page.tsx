@@ -1,6 +1,6 @@
 "use client"; // This is a client component 👈🏽
 
-import { UltraMeshGlobe } from "@/components/UltraMeshGlobe";
+import { ThreeScene, UltraMeshGlobe } from "@/components/UltraMeshGlobe";
 import { useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 
@@ -16,7 +16,8 @@ export default function Home() {
     >
       <div className="absolute inset-0">
         <ErrorBoundary fallback={<p>Something went wrong</p>}>
-          <UltraMeshGlobe setHasClickedOnce={setHasClickedOnce} />
+          {/* <UltraMeshGlobe setHasClickedOnce={setHasClickedOnce} /> */}
+          <ThreeScene />
         </ErrorBoundary>
 
         {!hasClickedOnce && (
