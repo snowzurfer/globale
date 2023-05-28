@@ -21,25 +21,30 @@ export default function Home() {
 
         {!hasClickedOnce && (
           <div className="absolute inset-0 w-full h-full flex items-center justify-center pointer-events-none">
-            <div className="bg-white p-4 rounded-lg shadow-lg pointer-events-auto">
+            <div className="bg-white m-8 p-4 rounded-lg shadow-lg pointer-events-auto">
               <h1 className="text-2xl font-bold mb-2">
-                Welcome to ⛰️ globale!
+                🌏 Welcome to globale! 🌍
               </h1>
               <p className="mb-2">
-                This is a [WIP] demo of a 3D globe 🌍 with Google Maps 3D Tiles,
+                This is a synchronized 3D globe editor rendering Google Maps 3D Tiles,
                 using {" "}
                 <a
                   href="https://github.com/ebeaufay/UltraGlobe"
                   className="text-blue-600 dark:text-blue-500 hover:underline"
                 >
                   UltraGlobe
-                </a>{" "}
-                and{" "}
+                </a>,{" "}
                 <a
-                  href="https://github.com/mrdoob/three.js/"
+                  href="https://docs.pmnd.rs/react-three-fiber/getting-started/introduction"
                   className="text-blue-600 dark:text-blue-500 hover:underline"
                 >
-                  ThreeJS
+                  react-three-fiber
+                </a> and{" "}
+                <a
+                  href="https://github.com/pmndrs/drei"
+                  className="text-blue-600 dark:text-blue-500 hover:underline"
+                >
+                  drei
                 </a>
                 .
               </p>
@@ -55,7 +60,7 @@ export default function Home() {
               </p>
               <p className="mb-2">
                 Click anywhere on the globe to dismiss this message and add
-                ThreeJS objects!.
+                ThreeJS objects! They are synchronized and persisted 🔁.
               </p>
             </div>
           </div>

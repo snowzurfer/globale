@@ -3,9 +3,7 @@
 import { useFrame, useThree } from "@react-three/fiber";
 import { Map } from "@submodules/ultraglobe/src/Map";
 import { GoogleMap3DTileLayer } from "@submodules/ultraglobe/src/layers/GoogleMap3DTileLayer";
-
 import { forwardRef, useEffect, useRef } from "react";
-import { Object3D } from "three";
 
 export interface Props {
   setHasClickedOnce: (hasClickedOnce: boolean) => void;

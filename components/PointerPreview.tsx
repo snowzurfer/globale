@@ -18,24 +18,11 @@ export const PointerPreview: FunctionComponent<Props> = ({
   const ceObjectRef = useRef<Object3D>();
   const [raycaster] = useState(() => new Raycaster());
 
-  useEffect(() => {
-      const map = ultraGlobeMapRef.current;
-      if (!map) return;
-
-      const ceObject = map.scene.children.find(
-        (child: Object3D) => child.constructor.name === "ce"
-      );
-      if (!ceObject) {
-        throw new Error("Couldn't find ceObject");
-      }
-      raycaster.layers.enable(ceObject.layers.mask);
-
-  })
-
   useFrame((state, _delta) => {
     const map = ultraGlobeMapRef.current;
     if (!map) return;
 
+    // This way we only initialize it once
     if (!ceObjectRef.current) {
       const ceObject = map.scene.children.find(
         (child: Object3D) => child.constructor.name === "ce"
