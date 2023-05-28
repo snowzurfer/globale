@@ -1,6 +1,6 @@
 import { Canvas } from "@react-three/fiber";
 import { FunctionComponent, useRef } from "react";
-import { Color } from "three";
+import { Color, Vector3 } from "three";
 import { UltraMeshGlobe } from "./UltraMeshGlobe";
 import { type Map } from "@submodules/ultraglobe/src/Map";
 import { PointerPreview } from "./PointerPreview";
@@ -25,12 +25,15 @@ export const ThreeScene: FunctionComponent = () => {
         logarithmicDepthBuffer: true,
       }}
       onCreated={(state) => {
-        const scene = state.scene;
-        if (!scene) return;
-
         // We do this rather than using the `scene` prop because by doing
         // that it doesn't stick.
-        scene.background = new Color(0x000000);
+        state.scene.background = new Color(0x000000);
+
+        // We do this here because we can't set the lookAt from the props 
+        // of the Canvas
+        //
+        // This value was found from the original source code of UltraGlobe.
+        state.camera.lookAt(new Vector3(-0, 0, 10000));
       }}
     >
       <UltraMeshGlobe ref={ultraglobeMapRef} setHasClickedOnce={() => {}} />

@@ -8,12 +8,7 @@ export default function Home() {
   const [hasClickedOnce, setHasClickedOnce] = useState(false);
 
   return (
-    <main
-      className="w-full h-screen"
-      onContextMenu={(e) => {
-        e.preventDefault();
-      }}
-    >
+    <main className="w-full h-screen" onContextMenu={(e) => e.preventDefault()}>
       <div className="absolute inset-0">
         <ErrorBoundary fallback={<p>Something went wrong</p>}>
           <ThreeScene />
