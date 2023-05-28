@@ -1,6 +1,6 @@
 import { Sphere } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
-import { FunctionComponent, MutableRefObject, useEffect, useRef, useState } from "react";
+import { FunctionComponent, MutableRefObject, useRef, useState } from "react";
 import { type Map } from "@submodules/ultraglobe/src/Map";
 import { type Object3D, type Mesh, Raycaster } from "three";
 
