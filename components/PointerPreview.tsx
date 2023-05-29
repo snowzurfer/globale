@@ -115,7 +115,7 @@ export const PointerPreview: FunctionComponent<Props> = ({
       <group ref={pointerGroupRef}>
         <mesh raycast={raycast}>
           <meshLineGeometry points={[0, 0, 0, 0, 40, 0]} />
-          <meshLineMaterial lineWidth={15} color="white" transparent sizeAttenuation={0} resolution={new Vector2(512, 512)} dashArray={0.1} dashRatio={0.5} />
+          <meshLineMaterial lineWidth={8} color="white" transparent sizeAttenuation={0} resolution={new Vector2(512, 512)} dashArray={0.1} dashRatio={0.5} />
         </mesh>
         <Sphere args={[5]} position={[0, 40, 0]}>
           <meshLambertMaterial color="red" />
