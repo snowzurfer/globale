@@ -54,6 +54,8 @@ export const ThreeScene: FunctionComponent = () => {
         state.camera.lookAt(new Vector3(0, 0, 10000));
       }}
     >
+      <ambientLight />
+      <directionalLight position={[90000000, 90000000, 90000000]} />
       <UltraGlobeMesh ref={ultraglobeMapRef} />
       <PointerPreview
         ultraGlobeMapRef={ultraglobeMapRef}

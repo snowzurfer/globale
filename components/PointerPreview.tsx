@@ -1,25 +1,52 @@
 import { Sphere } from "@react-three/drei";
-import { useFrame } from "@react-three/fiber";
+import {
+  type MaterialNode,
+  type Object3DNode,
+  extend,
+  useFrame,
+} from "@react-three/fiber";
 import { FunctionComponent, MutableRefObject, useRef, useState } from "react";
 import { type Map } from "@submodules/ultraglobe/src/Map";
-import { type Object3D, type Mesh, Raycaster, Vector2, Vector3 } from "three";
+import {
+  type Object3D,
+  Raycaster,
+  Vector2,
+  Vector3,
+  type Group,
+  Quaternion,
+} from "three";
+import { MeshLineGeometry, MeshLineMaterial, raycast } from "meshline";
+
+extend({ MeshLineGeometry, MeshLineMaterial });
+
+declare module "@react-three/fiber" {
+  interface ThreeElements {
+    meshLineGeometry: Object3DNode<MeshLineGeometry, typeof MeshLineGeometry>;
+    meshLineMaterial: MaterialNode<MeshLineMaterial, typeof MeshLineMaterial>;
+  }
+}
+
+const upVector = new Vector3(0, 1, 0);
 
 export interface Props {
   ultraGlobeMapRef: MutableRefObject<Map | null>;
-  onSelect?: (position: Vector3) => void
+  onSelect?: (position: Vector3) => void;
 }
 
 export const PointerPreview: FunctionComponent<Props> = ({
   ultraGlobeMapRef,
-  onSelect
+  onSelect,
 }) => {
-  const pointerSphereRef = useRef<Mesh>(null!);
+  const pointerGroupRef = useRef<Group>(null!);
   /**
    * Reference to the tiles in the scene, used to interact with them.
    */
   const ceObjectRef = useRef<Object3D>();
   const [raycaster] = useState(() => new Raycaster());
   let [setupSelectCallback] = useState(() => false);
+  let [normalVector] = useState(() => new Vector3());
+  let [worldQuaternion] = useState(() => new Quaternion());
+  let [earthCenterToIntersection] = useState(() => new Vector3());
 
   useFrame((state, _delta) => {
     const map = ultraGlobeMapRef.current;
@@ -36,45 +63,64 @@ export const PointerPreview: FunctionComponent<Props> = ({
       ceObjectRef.current = ceObject;
     }
 
+    const group = pointerGroupRef.current;
+
     if (!setupSelectCallback) {
       if (map.selectController) {
         map.selectController.selectCallback = (mouseUpLocation: Vector2) => {
-          const position = new Vector3().copy(pointerSphereRef.current.position)
+          const position = new Vector3().copy(
+            group.position
+          );
           onSelect?.(position);
-          // // Create a sphere colored white at the location of the debug one
-          // const geom = new SphereGeometry(5);
-          // const mesh = new Mesh(geom);
-          // mesh.position.copy(debugSphereMesh.position);
-          // // Pick a random, solid and nice color, but make it vary a lot
-          // mesh.material = new MeshBasicMaterial({
-          //   color: `hsl(${Math.random() * 360}, 100%, 50%)`,
-          // });
-          // map.scene.add(mesh);
-          // spheres.push(mesh);
         };
       }
     }
 
     const pointer = state.pointer;
     const camera = state.camera;
-    const sphere = pointerSphereRef.current;
     raycaster.setFromCamera(pointer, camera);
 
     // Via the if statement above, we're ensured to have a ceObject by here
     const intersects = raycaster.intersectObject(ceObjectRef.current!);
     const firstIntersection = intersects[0];
     if (firstIntersection) {
-      sphere.position.copy(firstIntersection.point);
+      group.position.copy(firstIntersection.point);
+
+      // Create a line from the point of collision to a few meters up, perpendicularly to the surface of collision
+      firstIntersection.object.getWorldQuaternion(worldQuaternion);
+      normalVector.copy(firstIntersection.face!.normal).applyQuaternion(
+        worldQuaternion 
+      ).normalize();
+
+      earthCenterToIntersection.copy(firstIntersection.point).normalize();
+
+      if (earthCenterToIntersection.dot(normalVector) > 0.3) {
+        normalVector.copy(earthCenterToIntersection);
+      } else {
+        // Project the normal onto a plane that's perpendicular to the earth's center
+        normalVector.projectOnPlane(earthCenterToIntersection);
+      }
+
+      // make the group's Y axis point in the same direction as the normal vector
+      group.quaternion.setFromUnitVectors(upVector, normalVector);
     }
 
     // Make the spheres be at a constant size, based on the distance from the camera
-    const distance = sphere.position.distanceTo(camera.position);
-    sphere.scale.setScalar(distance / 1000);
+    const distance = group.position.distanceTo(camera.position);
+    group.scale.setScalar(distance / 1000);
   });
 
   return (
-    <Sphere args={[5]} ref={pointerSphereRef}>
-      <meshBasicMaterial color={"hotpink"} />
-    </Sphere>
+    <>
+      <group ref={pointerGroupRef}>
+        <mesh raycast={raycast}>
+          <meshLineGeometry points={[0, 0, 0, 0, 40, 0]} />
+          <meshLineMaterial lineWidth={15} color="white" transparent sizeAttenuation={0} resolution={new Vector2(512, 512)} dashArray={0.1} dashRatio={0.5} />
+        </mesh>
+        <Sphere args={[5]} position={[0, 40, 0]}>
+          <meshLambertMaterial color="red" />
+        </Sphere>
+      </group>
+    </>
   );
 };
