@@ -1,12 +1,30 @@
 import { Canvas } from "@react-three/fiber";
-import { FunctionComponent, useRef } from "react";
+import { FunctionComponent, useCallback, useRef, useState } from "react";
 import { Color, Vector3 } from "three";
-import { UltraMeshGlobe } from "./UltraMeshGlobe";
+import { UltraGlobeMesh } from "./UltraGlobeMesh";
 import { type Map } from "@submodules/ultraglobe/src/Map";
 import { PointerPreview } from "./PointerPreview";
+import { v4 as uuid4 } from "uuid";
+import { Sphere } from "@react-three/drei";
+
+export interface SceneItem {
+  id: string;
+  pos: Vector3;
+}
 
 export const ThreeScene: FunctionComponent = () => {
   const ultraglobeMapRef = useRef<Map | null>(null);
+
+  const [sceneItems, setSceneItems] = useState<SceneItem[]>([]);
+
+  const addItemOnSelect = useCallback((cartesianPosition: Vector3) => {
+    const item: SceneItem = {
+      id: uuid4(),
+      pos: new Vector3().copy(cartesianPosition),
+    };
+
+    setSceneItems((values) => [...values, item]);
+  }, []);
 
   return (
     <Canvas
@@ -29,15 +47,24 @@ export const ThreeScene: FunctionComponent = () => {
         // that it doesn't stick.
         state.scene.background = new Color(0x000000);
 
-        // We do this here because we can't set the lookAt from the props 
+        // We do this here because we can't set the lookAt from the props
         // of the Canvas
         //
         // This value was found from the original source code of UltraGlobe.
-        state.camera.lookAt(new Vector3(-0, 0, 10000));
+        state.camera.lookAt(new Vector3(0, 0, 10000));
       }}
     >
-      <UltraMeshGlobe ref={ultraglobeMapRef} setHasClickedOnce={() => {}} />
-      <PointerPreview ultraGlobeMapRef={ultraglobeMapRef} />
+      <UltraGlobeMesh ref={ultraglobeMapRef} />
+      <PointerPreview
+        ultraGlobeMapRef={ultraglobeMapRef}
+        onSelect={addItemOnSelect}
+      />
+
+      {sceneItems.map((item) => (
+        <Sphere args={[5]} key={item.id} position={item.pos}>
+          <meshBasicMaterial color="blue" />
+        </Sphere>
+      ))}
     </Canvas>
   );
 };
