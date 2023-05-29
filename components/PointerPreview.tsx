@@ -4,8 +4,15 @@ import {
   type Object3DNode,
   extend,
   useFrame,
+  useThree,
 } from "@react-three/fiber";
-import { FunctionComponent, MutableRefObject, useRef, useState } from "react";
+import {
+  FunctionComponent,
+  MutableRefObject,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { type Map } from "@submodules/ultraglobe/src/Map";
 import {
   type Object3D,
@@ -16,6 +23,7 @@ import {
   Quaternion,
 } from "three";
 import { MeshLineGeometry, MeshLineMaterial, raycast } from "meshline";
+import { is } from "@react-three/fiber/dist/declarations/src/core/utils";
 
 extend({ MeshLineGeometry, MeshLineMaterial });
 
@@ -37,6 +45,8 @@ export const PointerPreview: FunctionComponent<Props> = ({
   ultraGlobeMapRef,
   onSelect,
 }) => {
+  const gl = useThree((state) => state.gl);
+
   const pointerGroupRef = useRef<Group>(null!);
   /**
    * Reference to the tiles in the scene, used to interact with them.
@@ -47,8 +57,32 @@ export const PointerPreview: FunctionComponent<Props> = ({
   let [normalVector] = useState(() => new Vector3());
   let [worldQuaternion] = useState(() => new Quaternion());
   let [earthCenterToIntersection] = useState(() => new Vector3());
+  const isPointerDown = useRef(false);
+
+  // Detect when the user is tapping or clicking the canvas
+  useEffect(() => {
+    const domElement = gl.domElement;
+    const handlePointerDown = (_event: MouseEvent) => {
+      isPointerDown.current = true;
+    };
+
+    domElement.addEventListener("pointerdown", handlePointerDown);
+
+    const handlePointerUp = (_event: MouseEvent) => {
+      isPointerDown.current = false;
+    };
+
+    domElement.addEventListener("pointerup", handlePointerUp);
+
+    return () => {
+      domElement.removeEventListener("click", handlePointerDown);
+      domElement.removeEventListener("click", handlePointerUp);
+    };
+  }, [gl.domElement]);
 
   useFrame((state, _delta) => {
+    if (isPointerDown.current) return;
+
     const map = ultraGlobeMapRef.current;
     if (!map) return;
 
@@ -68,9 +102,7 @@ export const PointerPreview: FunctionComponent<Props> = ({
     if (!setupSelectCallback) {
       if (map.selectController) {
         map.selectController.selectCallback = (mouseUpLocation: Vector2) => {
-          const position = new Vector3().copy(
-            group.position
-          );
+          const position = new Vector3().copy(group.position);
           onSelect?.(position);
         };
       }
@@ -88,9 +120,10 @@ export const PointerPreview: FunctionComponent<Props> = ({
 
       // Create a line from the point of collision to a few meters up, perpendicularly to the surface of collision
       firstIntersection.object.getWorldQuaternion(worldQuaternion);
-      normalVector.copy(firstIntersection.face!.normal).applyQuaternion(
-        worldQuaternion 
-      ).normalize();
+      normalVector
+        .copy(firstIntersection.face!.normal)
+        .applyQuaternion(worldQuaternion)
+        .normalize();
 
       earthCenterToIntersection.copy(firstIntersection.point).normalize();
 
@@ -115,7 +148,15 @@ export const PointerPreview: FunctionComponent<Props> = ({
       <group ref={pointerGroupRef}>
         <mesh raycast={raycast}>
           <meshLineGeometry points={[0, 0, 0, 0, 40, 0]} />
-          <meshLineMaterial lineWidth={8} color="white" transparent sizeAttenuation={0} resolution={new Vector2(512, 512)} dashArray={0.1} dashRatio={0.5} />
+          <meshLineMaterial
+            lineWidth={8}
+            color="white"
+            transparent
+            sizeAttenuation={0}
+            resolution={new Vector2(512, 512)}
+            dashArray={0.1}
+            dashRatio={0.5}
+          />
         </mesh>
         <Sphere args={[5]} position={[0, 40, 0]}>
           <meshLambertMaterial color="red" />
