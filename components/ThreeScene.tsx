@@ -1,30 +1,35 @@
 import { Canvas } from "@react-three/fiber";
 import { FunctionComponent, useCallback, useRef, useState } from "react";
-import { Color, Vector3 } from "three";
+import { Color, type Quaternion, Vector3 } from "three";
 import { UltraGlobeMesh } from "./UltraGlobeMesh";
 import { type Map } from "@submodules/ultraglobe/src/Map";
 import { PointerPreview } from "./PointerPreview";
 import { v4 as uuid4 } from "uuid";
-import { Sphere } from "@react-three/drei";
-
-export interface SceneItem {
-  id: string;
-  pos: Vector3;
-}
+import { Box, Sphere } from "@react-three/drei";
+import { useGlobaleStore, type SceneItem } from "@/app/store";
+import { SceneItems } from "./SceneItems";
 
 export const ThreeScene: FunctionComponent = () => {
   const ultraglobeMapRef = useRef<Map | null>(null);
 
-  const [sceneItems, setSceneItems] = useState<SceneItem[]>([]);
+  const sceneItems = useGlobaleStore((state) => state.sceneItems);
+  const addSceneItem = useGlobaleStore((state) => state.addSceneItem);
 
-  const addItemOnSelect = useCallback((cartesianPosition: Vector3) => {
-    const item: SceneItem = {
-      id: uuid4(),
-      pos: new Vector3().copy(cartesianPosition),
-    };
+  const addItemOnSelect = useCallback(
+    (cartesianPosition: Vector3, quaternion: Quaternion) => {
+      const item: SceneItem = {
+        id: uuid4(),
+        pos: cartesianPosition.clone(),
+        quat: quaternion.clone(),
+      };
 
-    setSceneItems((values) => [...values, item]);
-  }, []);
+      addSceneItem(item);
+      console.log("Added item", item);
+    },
+    [addSceneItem]
+  );
+
+  console.log("Scene items", sceneItems);
 
   return (
     <Canvas
@@ -61,12 +66,14 @@ export const ThreeScene: FunctionComponent = () => {
         ultraGlobeMapRef={ultraglobeMapRef}
         onSelect={addItemOnSelect}
       />
+      <SceneItems items={sceneItems} />
 
-      {sceneItems.map((item) => (
-        <Sphere args={[5]} key={item.id} position={item.pos}>
-          <meshBasicMaterial color="blue" />
-        </Sphere>
-      ))}
+      <Box
+        position={[5789550.501385905, 825334.8852818692, 2539897.4153787824]}
+        args={[20, 20, 20]}
+      >
+        <meshBasicMaterial color={0xff0000} />
+      </Box>
     </Canvas>
   );
 };

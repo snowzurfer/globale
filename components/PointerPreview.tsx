@@ -1,8 +1,4 @@
-import { Sphere } from "@react-three/drei";
 import {
-  type MaterialNode,
-  type Object3DNode,
-  extend,
   useFrame,
   useThree,
 } from "@react-three/fiber";
@@ -22,23 +18,18 @@ import {
   type Group,
   Quaternion,
 } from "three";
-import { MeshLineGeometry, MeshLineMaterial, raycast } from "meshline";
-import { is } from "@react-three/fiber/dist/declarations/src/core/utils";
-
-extend({ MeshLineGeometry, MeshLineMaterial });
-
-declare module "@react-three/fiber" {
-  interface ThreeElements {
-    meshLineGeometry: Object3DNode<MeshLineGeometry, typeof MeshLineGeometry>;
-    meshLineMaterial: MaterialNode<MeshLineMaterial, typeof MeshLineMaterial>;
-  }
-}
+import { Pointer } from "./Pointer";
 
 const upVector = new Vector3(0, 1, 0);
 
+export type OnSelectCallback = (
+  position: Vector3,
+  quaternion: Quaternion
+) => void;
+
 export interface Props {
   ultraGlobeMapRef: MutableRefObject<Map | null>;
-  onSelect?: (position: Vector3) => void;
+  onSelect?: OnSelectCallback;
 }
 
 export const PointerPreview: FunctionComponent<Props> = ({
@@ -103,8 +94,13 @@ export const PointerPreview: FunctionComponent<Props> = ({
       if (map.selectController) {
         map.selectController.selectCallback = (mouseUpLocation: Vector2) => {
           const position = new Vector3().copy(group.position);
-          onSelect?.(position);
+          const quaternion = new Quaternion().copy(group.quaternion);
+
+          onSelect?.(position, quaternion);
+          console.log("OnSelect");
         };
+
+        setupSelectCallback = true;
       }
     }
 
@@ -143,25 +139,5 @@ export const PointerPreview: FunctionComponent<Props> = ({
     group.scale.setScalar(distance / 1000);
   });
 
-  return (
-    <>
-      <group ref={pointerGroupRef}>
-        <mesh raycast={raycast}>
-          <meshLineGeometry points={[0, 0, 0, 0, 40, 0]} />
-          <meshLineMaterial
-            lineWidth={8}
-            color="white"
-            transparent
-            sizeAttenuation={0}
-            resolution={new Vector2(512, 512)}
-            dashArray={0.1}
-            dashRatio={0.5}
-          />
-        </mesh>
-        <Sphere args={[5]} position={[0, 40, 0]}>
-          <meshLambertMaterial color="red" />
-        </Sphere>
-      </group>
-    </>
-  );
+  return <Pointer ref={pointerGroupRef} />;
 };
