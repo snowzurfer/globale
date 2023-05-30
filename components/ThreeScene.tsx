@@ -2,7 +2,8 @@ import { Canvas } from "@react-three/fiber";
 import { FunctionComponent, useCallback, useRef, useState } from "react";
 import { Color, type Quaternion, Vector3 } from "three";
 import { UltraGlobeMesh } from "./UltraGlobeMesh";
-// import { type Map } from "@submodules/ultraglobe/src/Map";
+// @ts-ignore
+import { type Map } from "@jdultra/ultra-globe/src/Map";
 import { PointerPreview } from "./PointerPreview";
 import { v4 as uuid4 } from "uuid";
 import { useGlobaleStore, type SceneItem } from "@/app/store";

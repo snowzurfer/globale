@@ -1,7 +1,4 @@
-import {
-  useFrame,
-  useThree,
-} from "@react-three/fiber";
+import { useFrame, useThree } from "@react-three/fiber";
 import {
   FunctionComponent,
   MutableRefObject,
@@ -9,7 +6,8 @@ import {
   useRef,
   useState,
 } from "react";
-import { type Map } from "@submodules/ultraglobe/src/Map";
+// @ts-ignore
+import { type Map } from "@jdultra/ultra-globe/src/Map";
 import {
   type Object3D,
   Raycaster,
@@ -47,9 +45,11 @@ export const PointerPreview: FunctionComponent<Props> = ({
   const ceObjectRef = useRef<Object3D>();
   const [raycaster] = useState(() => new Raycaster());
   let [setupSelectCallback] = useState(() => false);
-  let [normalVector] = useState(() => new Vector3());
-  let [worldQuaternion] = useState(() => new Quaternion());
-  let [earthCenterToIntersection] = useState(() => new Vector3());
+  const [normalVector] = useState(() => new Vector3());
+  const [worldQuaternion] = useState(() => new Quaternion());
+  const [earthCenterToIntersection] = useState(() => new Vector3());
+  const [targetGroupPosition] = useState(() => new Vector3());
+  const [targetGroupQuaternion] = useState(() => new Quaternion());
   const isPointerDown = useRef(false);
 
   // Detect when the user is tapping or clicking the canvas
@@ -114,7 +114,7 @@ export const PointerPreview: FunctionComponent<Props> = ({
     const intersects = raycaster.intersectObject(ceObjectRef.current!);
     const firstIntersection = intersects[0];
     if (firstIntersection) {
-      group.position.copy(firstIntersection.point);
+      targetGroupPosition.copy(firstIntersection.point);
 
       // Create a line from the point of collision to a few meters up, perpendicularly to the surface of collision
       firstIntersection.object.getWorldQuaternion(worldQuaternion);
@@ -133,8 +133,11 @@ export const PointerPreview: FunctionComponent<Props> = ({
       }
 
       // make the group's Y axis point in the same direction as the normal vector
-      group.quaternion.setFromUnitVectors(upVector, normalVector);
+      targetGroupQuaternion.setFromUnitVectors(upVector, normalVector);
     }
+
+    group.position.lerp(targetGroupPosition, 0.13);
+    group.quaternion.slerp(targetGroupQuaternion, 0.3);
 
     // Make the spheres be at a constant size, based on the distance from the camera
     const distance = group.position.distanceTo(camera.position);
