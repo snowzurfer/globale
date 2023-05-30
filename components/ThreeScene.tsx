@@ -15,6 +15,9 @@ export const ThreeScene: FunctionComponent = () => {
   const showPointer = useGlobaleStore((state) => state.showPointer);
   const sceneItems = useGlobaleStore((state) => state.sceneItems);
   const addSceneItem = useGlobaleStore((state) => state.addSceneItem);
+  const pointerInteractsWithVerticalSurfaces = useGlobaleStore(
+    (state) => state.pointerInteractsWithVerticalSurfaces
+  );
 
   const addItemOnSelect = useCallback(
     (cartesianPosition: Vector3, quaternion: Quaternion) => {
@@ -68,6 +71,7 @@ export const ThreeScene: FunctionComponent = () => {
         ultraGlobeMapRef={ultraglobeMapRef}
         onSelect={addItemOnSelect}
         visible={showPointer}
+        interactsWithVerticalSurfaces={pointerInteractsWithVerticalSurfaces}
       />
       <SceneItems items={sceneItems} />
     </Canvas>

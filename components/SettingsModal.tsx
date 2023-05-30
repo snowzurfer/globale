@@ -24,9 +24,15 @@ export const SettingsSection: FunctionComponent<SettingsSectionProps> = ({
 export const SettingsModal: FunctionComponent<{ onClose: () => void }> = ({
   onClose,
 }) => {
-
   const showPointer = useGlobaleStore((state) => state.showPointer);
   const setShowPointer = useGlobaleStore((state) => state.setShowPointer);
+
+  const pointerInteractsWithVerticalSurfaces = useGlobaleStore(
+    (state) => state.pointerInteractsWithVerticalSurfaces
+  );
+  const setPointerInteractsWithVerticalSurfaces = useGlobaleStore(
+    (state) => state.setPointerInteractsWithVerticalSurfaces
+  );
 
   const clickToAdd = useGlobaleStore((state) => state.clickToAdd);
   const setClickToAdd = useGlobaleStore((state) => state.setClickToAdd);
@@ -59,6 +65,11 @@ export const SettingsModal: FunctionComponent<{ onClose: () => void }> = ({
             setEnabled={setShowPointer}
           />
           <SwitchWithlabel
+            label="Pointer interacts with vertical surfaces"
+            enabled={pointerInteractsWithVerticalSurfaces}
+            setEnabled={setPointerInteractsWithVerticalSurfaces}
+          />
+          <SwitchWithlabel
             label="Click to add item"
             enabled={clickToAdd}
             setEnabled={setClickToAdd}
@@ -75,7 +86,16 @@ export const SettingsModal: FunctionComponent<{ onClose: () => void }> = ({
         </SettingsSection>
 
         <p className="mt-6 font-secondary w-full text-center text-xs text-gray-400">
-          Made by{" "}
+          Created by{" "}
+          <a
+            href="https://albertotaiuti.com/"
+            className="text-blue-500 dark:text-blue-400 hover:underline"
+          >
+            Alberto Taiuti
+          </a>
+        </p>
+        <p className="mt-6 font-secondary w-full text-center text-xs text-gray-400">
+          Created by{" "}
           <a
             href="https://albertotaiuti.com/"
             className="text-blue-500 dark:text-blue-400 hover:underline"

@@ -29,12 +29,14 @@ export interface Props {
   ultraGlobeMapRef: MutableRefObject<Map | null>;
   onSelect?: OnSelectCallback;
   visible?: boolean;
+  interactsWithVerticalSurfaces?: boolean;
 }
 
 export const PointerPreview: FunctionComponent<Props> = ({
   ultraGlobeMapRef,
   onSelect,
   visible = true,
+  interactsWithVerticalSurfaces = false,
 }) => {
   const gl = useThree((state) => state.gl);
 
@@ -115,20 +117,22 @@ export const PointerPreview: FunctionComponent<Props> = ({
     if (firstIntersection) {
       targetGroupPosition.copy(firstIntersection.point);
 
-      // Create a line from the point of collision to a few meters up, perpendicularly to the surface of collision
-      firstIntersection.object.getWorldQuaternion(worldQuaternion);
-      normalVector
-        .copy(firstIntersection.face!.normal)
-        .applyQuaternion(worldQuaternion)
-        .normalize();
-
       earthCenterToIntersection.copy(firstIntersection.point).normalize();
+      normalVector.copy(earthCenterToIntersection);
 
-      if (earthCenterToIntersection.dot(normalVector) > 0.3) {
-        normalVector.copy(earthCenterToIntersection);
-      } else {
-        // Project the normal onto a plane that's perpendicular to the earth's center
-        normalVector.projectOnPlane(earthCenterToIntersection);
+      if (interactsWithVerticalSurfaces) {
+        // Create a line from the point of collision to a few meters up, perpendicularly to the surface of collision
+        firstIntersection.object.getWorldQuaternion(worldQuaternion);
+        normalVector
+          .copy(firstIntersection.face!.normal)
+          .applyQuaternion(worldQuaternion)
+          .normalize();
+
+        // Only rotate if we're on a steep surface
+        if (earthCenterToIntersection.dot(normalVector) <= 0.3) {
+          // Project the normal onto a plane that's perpendicular to the earth's center
+          normalVector.projectOnPlane(earthCenterToIntersection);
+        }
       }
 
       // make the group's Y axis point in the same direction as the normal vector
