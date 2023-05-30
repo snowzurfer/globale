@@ -37,6 +37,11 @@ export interface GlobaleStore {
   showPointer: boolean;
   setShowPointer: (showPointer: boolean) => void;
 
+  pointerInteractsWithVerticalSurfaces: boolean;
+  setPointerInteractsWithVerticalSurfaces: (
+    pointerInteractsWithVerticalSurfaces: boolean
+  ) => void;
+
   clickToAdd: boolean;
   setClickToAdd: (clickToAdd: boolean) => void;
 
@@ -58,6 +63,11 @@ export const useGlobaleStore = create<GlobaleStore>()((set) => ({
 
   showPointer: true,
   setShowPointer: (showPointer) => set({ showPointer }),
+
+  pointerInteractsWithVerticalSurfaces: false,
+  setPointerInteractsWithVerticalSurfaces: (
+    pointerInteractsWithVerticalSurfaces
+  ) => set({ pointerInteractsWithVerticalSurfaces }),
 
   clickToAdd: true,
   setClickToAdd: (clickToAdd) => set({ clickToAdd }),

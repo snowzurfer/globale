@@ -81,9 +81,8 @@ export const PointerPreview: FunctionComponent<Props> = ({
 
     // This way we only initialize it once
     if (!ceObjectRef.current) {
-      const ceObject = map.scene.children.find(
-        (child: Object3D) => child.constructor.name === "ce"
-      );
+      // A brittle way to get the tileset from the layers, but ok for now.
+      const ceObject = map.layerManager.layers[0].tileset;
       if (!ceObject) return;
       raycaster.layers.enable(ceObject.layers.mask);
 
