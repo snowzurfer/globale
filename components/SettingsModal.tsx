@@ -4,18 +4,28 @@ import { FunctionComponent, PropsWithChildren } from "react";
 import { SwitchWithlabel } from "./SwitchWithLabel";
 import { useGlobaleStore } from "@/app/store";
 import { Modal } from "./Modal";
+import { clsxm } from "@/clsxm";
 
 export interface SettingsSectionProps extends PropsWithChildren {
   title: string;
+  titleClassName?: string;
 }
 
 export const SettingsSection: FunctionComponent<SettingsSectionProps> = ({
   title,
   children,
+  titleClassName,
 }) => {
   return (
     <div className="flex flex-col items-start w-full mb-3">
-      <h2 className="text-xl text-gray-800 font-semibold mb-2">{title}</h2>
+      <h2
+        className={clsxm(
+          "text-xl text-gray-800 font-semibold mb-2",
+          titleClassName
+        )}
+      >
+        {title}
+      </h2>
       <div className="flex flex-col w-full gap-2">{children}</div>
     </div>
   );

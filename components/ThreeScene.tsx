@@ -33,7 +33,9 @@ export const ThreeScene: FunctionComponent = () => {
           pos: cartesianPosition.toArray(),
           quat: quaternion.toArray() as [number, number, number, number],
         },
-        type: itemToAdd, 
+        type: itemToAdd,
+        color: "#00A3E1",
+        scaleInvariant: true,
       };
 
       addSceneItem(item);

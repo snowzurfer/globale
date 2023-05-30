@@ -6,17 +6,22 @@ export interface Props {
   label: string;
   enabled: boolean;
   setEnabled: (enabled: boolean) => void;
+  labelClassName?: string;
 }
 
 export const SwitchWithlabel: FunctionComponent<Props> = ({
   label,
   enabled,
   setEnabled,
+  labelClassName,
 }) => {
   return (
     <Switch.Group as="div" className="flex items-center justify-between w-full">
       <span className="">
-        <Switch.Description as="span" className="text-sm text-gray-500">
+        <Switch.Description
+          as="span"
+          className={clsxm("text-sm text-gray-500", labelClassName)}
+        >
           {label}
         </Switch.Description>
       </span>

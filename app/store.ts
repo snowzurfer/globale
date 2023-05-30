@@ -24,10 +24,19 @@ export interface SceneItem {
   positionAndRotation: PositionAndRotation;
   type: SceneItemType;
   /**
+   * Optional field for color
+   */
+  color?: string;
+  /**
    * Optional field for model type
    */
   model?: string;
-  scaleInvariant?: boolean;
+  scaleInvariant: boolean;
+}
+
+export interface SceneItemAndIndex {
+  itemId: SceneItem["id"];
+  index: number;
 }
 
 export type ModalType = "settings" | "credits" | "items";
@@ -57,6 +66,7 @@ export interface GlobaleStore {
 
   sceneItems: SceneItem[];
   addSceneItem: (item: SceneItem) => void;
+  updateSceneItem: (item: SceneItem, atIndex: number) => void;
 
   showAddItemMenu: boolean;
   pointerPosition: PositionAndRotation;
@@ -66,6 +76,10 @@ export interface GlobaleStore {
   ) => void;
   itemToAdd: SceneItemType;
   setItemToAdd: (itemToAdd: SceneItemType) => void;
+  hoveredItem?: SceneItemAndIndex;
+  setHoveredItem: (itemId?: SceneItem["id"]) => void;
+  selectedItem?: SceneItemAndIndex;
+  setSelectedItem: (itemId?: SceneItem["id"]) => void;
 }
 
 export const useGlobaleStore = create<GlobaleStore>()((set, get) => ({
@@ -101,10 +115,39 @@ export const useGlobaleStore = create<GlobaleStore>()((set, get) => ({
     quat: [0, 0, 0, 1],
   },
   setShowAddItemMenu: (showAddItemMenu, pointerPosition) => {
-    // get().pointerCartesianPosition.copy(pointerCartesianPosition);
     set({ pointerPosition, showAddItemMenu });
   },
 
   itemToAdd: "pointer",
   setItemToAdd: (itemToAdd) => set({ itemToAdd }),
+  updateSceneItem: (item, atIndex) =>
+    set((state) => {
+      const newSceneItems = [...state.sceneItems];
+      newSceneItems[atIndex] = item;
+      return { sceneItems: newSceneItems };
+    }),
+
+  hoveredItem: undefined,
+  setHoveredItem: (itemId) => {
+    if (itemId) {
+      const index = get().sceneItems.findIndex((item) => item.id === itemId);
+      if (index !== -1) {
+        set({ hoveredItem: { itemId, index } });
+      }
+    } else {
+      set({ hoveredItem: undefined });
+    }
+  },
+
+  selectedItem: undefined,
+  setSelectedItem: (itemId) => {
+    if (itemId) {
+      const index = get().sceneItems.findIndex((item) => item.id === itemId);
+      if (index !== -1) {
+        set({ selectedItem: { itemId, index } });
+      }
+    } else {
+      set({ selectedItem: undefined });
+    }
+  },
 }));

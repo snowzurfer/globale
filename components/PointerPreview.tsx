@@ -17,6 +17,7 @@ import {
   Quaternion,
 } from "three";
 import { Pointer } from "./Pointer";
+import { useGlobaleStore } from "@/app/store";
 
 const upVector = new Vector3(0, 1, 0);
 
@@ -102,7 +103,11 @@ export const PointerPreview: FunctionComponent<Props> = ({
 
     if (!setupSelectCallback.current) {
       if (map.selectController) {
-        map.selectController.selectCallback = (mouseUpLocation: Vector2) => {
+        map.selectController.selectCallback = (_mouseUpLocation: Vector2) => {
+          // If we're hovering, don't select on the globe
+          const store = useGlobaleStore.getState();
+          if (store.hoveredItem !== undefined) return;
+
           const position = new Vector3().copy(group.position);
           const quaternion = new Quaternion().copy(group.quaternion);
 
