@@ -48,7 +48,7 @@ export const PointerPreview: FunctionComponent<Props> = ({
    */
   const ceObjectRef = useRef<Object3D>();
   const [raycaster] = useState(() => new Raycaster());
-  let [setupSelectCallback] = useState(() => false);
+  const setupSelectCallback = useRef(false);
   const [normalVector] = useState(() => new Vector3());
   const [worldQuaternion] = useState(() => new Quaternion());
   const [earthCenterToIntersection] = useState(() => new Vector3());
@@ -77,6 +77,11 @@ export const PointerPreview: FunctionComponent<Props> = ({
     };
   }, [gl.domElement]);
 
+  // Reset the select callback whenever onSelect changes
+  useEffect(() => {
+    setupSelectCallback.current = false;
+  }, [onSelect]);
+
   useFrame((state, _delta) => {
     if (isPointerDown.current) return;
 
@@ -95,17 +100,16 @@ export const PointerPreview: FunctionComponent<Props> = ({
 
     const group = pointerGroupRef.current;
 
-    if (!setupSelectCallback) {
+    if (!setupSelectCallback.current) {
       if (map.selectController) {
         map.selectController.selectCallback = (mouseUpLocation: Vector2) => {
           const position = new Vector3().copy(group.position);
           const quaternion = new Quaternion().copy(group.quaternion);
 
           onSelect?.(position, quaternion);
-          console.log("OnSelect");
         };
 
-        setupSelectCallback = true;
+        setupSelectCallback.current = true;
       }
     }
 

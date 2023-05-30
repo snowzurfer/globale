@@ -1,5 +1,5 @@
 import { Canvas } from "@react-three/fiber";
-import { FunctionComponent, useCallback, useRef, useState } from "react";
+import { FunctionComponent, useCallback, useEffect, useRef, useState } from "react";
 import { Color, type Quaternion, Vector3 } from "three";
 import { UltraGlobeMesh } from "./UltraGlobeMesh";
 // @ts-ignore
@@ -41,8 +41,6 @@ export const ThreeScene: FunctionComponent = () => {
     },
     [addSceneItem, itemToAdd]
   );
-
-  console.log("Scene items", sceneItems);
 
   return (
     <Canvas
