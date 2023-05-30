@@ -6,24 +6,39 @@ export interface User {
   email?: string;
 }
 
+export type SceneItemType = "sphere" | "box" | "model" | "pointer" | "label";
+
 export interface SceneItem {
   id: string;
   pos: Vector3;
   quat: Quaternion;
+  type: SceneItemType;
+  /**
+   * Optional field for model type
+   */
+  model?: string;
   scaleInvariant?: boolean;
 }
+
+export type ModalType = "settings" | "credits";
 
 export interface GlobaleStore {
   user?: User;
   setUser: (user: User) => void;
   isSignedIn: boolean;
   setIsSignedIn: (isSignedIn: boolean) => void;
- 
+
   hasClickedOnce: boolean;
-  setHasClickedOnce: (hasClickedOnce: boolean) => void;  
+  setHasClickedOnce: (hasClickedOnce: boolean) => void;
+
+  modal?: ModalType;
+  setModal: (modal?: ModalType) => void;
 
   showPointer: boolean;
   setShowPointer: (showPointer: boolean) => void;
+
+  clickToAdd: boolean;
+  setClickToAdd: (clickToAdd: boolean) => void;
 
   sceneItems: SceneItem[];
   addSceneItem: (item: SceneItem) => void;
@@ -38,8 +53,14 @@ export const useGlobaleStore = create<GlobaleStore>()((set) => ({
   hasClickedOnce: false,
   setHasClickedOnce: (hasClickedOnce) => set({ hasClickedOnce }),
 
+  modal: undefined,
+  setModal: (modal) => set({ modal }),
+
   showPointer: true,
   setShowPointer: (showPointer) => set({ showPointer }),
+
+  clickToAdd: true,
+  setClickToAdd: (clickToAdd) => set({ clickToAdd }),
 
   sceneItems: [],
   addSceneItem: (item) =>

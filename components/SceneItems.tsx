@@ -25,9 +25,18 @@ export const SceneItemElement: FunctionComponent<SceneItemElementProps> = ({
 
   useKeepScale({ objectRef: groupRef, active: item.scaleInvariant });
 
+  let itemComponent;
+  switch (item.type) {
+    case "pointer":
+      itemComponent = <Pointer topColor={"#00A3E1"} />;
+      break;
+    default:
+      itemComponent = null;
+  }
+
   return (
     <group ref={groupRef} {...props}>
-      <Pointer  topColor={"#00A3E1"}/>
+      {itemComponent}
     </group>
   );
 };

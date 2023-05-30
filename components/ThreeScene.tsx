@@ -2,7 +2,7 @@ import { Canvas } from "@react-three/fiber";
 import { FunctionComponent, useCallback, useRef, useState } from "react";
 import { Color, type Quaternion, Vector3 } from "three";
 import { UltraGlobeMesh } from "./UltraGlobeMesh";
-import { type Map } from "@submodules/ultraglobe/src/Map";
+// import { type Map } from "@submodules/ultraglobe/src/Map";
 import { PointerPreview } from "./PointerPreview";
 import { v4 as uuid4 } from "uuid";
 import { useGlobaleStore, type SceneItem } from "@/app/store";
@@ -21,6 +21,7 @@ export const ThreeScene: FunctionComponent = () => {
         id: uuid4(),
         pos: cartesianPosition.clone(),
         quat: quaternion.clone(),
+        type: "pointer",
       };
 
       addSceneItem(item);
