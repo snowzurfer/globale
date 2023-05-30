@@ -8,6 +8,7 @@ import { type GroupProps } from "@react-three/fiber";
 import { FunctionComponent, useEffect, useRef } from "react";
 import { type Group } from "three";
 import { Pointer } from "./Pointer";
+import { RotatingBox } from "./RotatingBox";
 
 export interface Props {
   items: SceneItem[];
@@ -30,6 +31,9 @@ export const SceneItemElement: FunctionComponent<SceneItemElementProps> = ({
     case "pointer":
       itemComponent = <Pointer topColor={"#00A3E1"} />;
       break;
+    case "box":
+      itemComponent = <RotatingBox position={[0, 40, 0]} />;
+      break;
     default:
       itemComponent = null;
   }
@@ -48,8 +52,8 @@ export const SceneItems: FunctionComponent<Props> = ({ items }) => {
         <SceneItemElement
           key={item.id}
           item={item}
-          position={item.pos}
-          quaternion={item.quat}
+          position={item.positionAndRotation.pos}
+          quaternion={item.positionAndRotation.quat}
         />
       ))}
     </group>

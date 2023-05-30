@@ -1,9 +1,9 @@
 import { FunctionComponent, PropsWithChildren } from "react";
 // import firebase from 'firebase/app';
 // import 'firebase/auth';
-import { XMarkIcon } from "@heroicons/react/24/outline";
 import { SwitchWithlabel } from "./SwitchWithLabel";
 import { useGlobaleStore } from "@/app/store";
+import { Modal } from "./Modal";
 
 export interface SettingsSectionProps extends PropsWithChildren {
   title: string;
@@ -44,20 +44,8 @@ export const SettingsModal: FunctionComponent<{ onClose: () => void }> = ({
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50">
-      <div className="relative w-full max-w-lg px-6 py-4 bg-white shadow-lg rounded-md text-center flex flex-col items-start">
-        <div className="flex flex-row justify-between w-full mb-4">
-          <h1 className="text-3xl font-bold text-gray-800">Settings</h1>
-          <button
-            type="button"
-            className="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-            onClick={onClose}
-          >
-            <span className="sr-only">Close</span>
-            <XMarkIcon className="h-6 w-6" aria-hidden="true" />
-          </button>
-        </div>
-
+    <Modal title="Settings" onClose={onClose}>
+      <div className="flex flex-col items-start w-full">
         <SettingsSection title="Editor">
           <SwitchWithlabel
             label="Show pointer"
@@ -94,16 +82,15 @@ export const SettingsModal: FunctionComponent<{ onClose: () => void }> = ({
             Alberto Taiuti
           </a>
         </p>
-        <p className="mt-6 font-secondary w-full text-center text-xs text-gray-400">
-          Created by{" "}
+        <p className="mt-2 font-secondary w-full text-center text-xs text-gray-400">
           <a
-            href="https://albertotaiuti.com/"
+            href="https://github.com/snowzurfer/globale"
             className="text-blue-500 dark:text-blue-400 hover:underline"
           >
-            Alberto Taiuti
+            Credits & Code
           </a>
         </p>
       </div>
-    </div>
+    </Modal>
   );
 };

@@ -2,7 +2,7 @@ import React, { FunctionComponent, useState } from "react";
 // import { WelcomeModalView } from "./WelcomeModalView"; // import your modal component
 import { SettingsModal } from "./SettingsModal";
 import { useGlobaleStore } from "@/app/store";
-// import { ItemsModal } from "./ItemsModal";
+import { ItemsModal } from "./ItemsModal";
 
 export const ThreeSceneUI: FunctionComponent = () => {
   const modal = useGlobaleStore((state) => state.modal);
@@ -13,9 +13,9 @@ export const ThreeSceneUI: FunctionComponent = () => {
     case "settings":
       modalComponent = <SettingsModal onClose={() => setModal(undefined)} />;
       break;
-    // case "items":
-    //   modalComponent = <ItemsModal onClose={() => setModal(null)} />;
-    //   break;
+    case "items":
+      modalComponent = <ItemsModal onClose={() => setModal(undefined)} />;
+      break;
     default:
       modalComponent = null;
   }
@@ -30,12 +30,12 @@ export const ThreeSceneUI: FunctionComponent = () => {
           Settings
         </button>
 
-        {/* <button
+        <button
           className="px-4 py-2 text-sm font-medium text-white bg-blue-500 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          // onClick={() => setShowItems(true)}
+          onClick={() => setModal("items")}
         >
-          Add Item
-        </button> */}
+          Items
+        </button>
       </div>
 
 

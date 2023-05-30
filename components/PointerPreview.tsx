@@ -30,6 +30,7 @@ export interface Props {
   onSelect?: OnSelectCallback;
   visible?: boolean;
   interactsWithVerticalSurfaces?: boolean;
+  enabled?: boolean;
 }
 
 export const PointerPreview: FunctionComponent<Props> = ({
@@ -37,6 +38,7 @@ export const PointerPreview: FunctionComponent<Props> = ({
   onSelect,
   visible = true,
   interactsWithVerticalSurfaces = false,
+  enabled: active = true,
 }) => {
   const gl = useThree((state) => state.gl);
 
@@ -139,8 +141,10 @@ export const PointerPreview: FunctionComponent<Props> = ({
       targetGroupQuaternion.setFromUnitVectors(upVector, normalVector);
     }
 
-    group.position.lerp(targetGroupPosition, 0.13);
-    group.quaternion.slerp(targetGroupQuaternion, 0.3);
+    if (active) {
+      group.position.lerp(targetGroupPosition, 0.13);
+      group.quaternion.slerp(targetGroupQuaternion, 0.3);
+    }
 
     // Make the spheres be at a constant size, based on the distance from the camera
     const distance = group.position.distanceTo(camera.position);

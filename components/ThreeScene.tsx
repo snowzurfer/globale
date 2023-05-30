@@ -5,9 +5,9 @@ import { UltraGlobeMesh } from "./UltraGlobeMesh";
 // @ts-ignore
 import { type Map } from "@jdultra/ultra-globe/src/Map";
 import { PointerPreview } from "./PointerPreview";
-import { v4 as uuid4 } from "uuid";
 import { useGlobaleStore, type SceneItem } from "@/app/store";
 import { SceneItems } from "./SceneItems";
+import { v4 as uuid4 } from "uuid";
 
 export const ThreeScene: FunctionComponent = () => {
   const ultraglobeMapRef = useRef<Map | null>(null);
@@ -18,20 +18,28 @@ export const ThreeScene: FunctionComponent = () => {
   const pointerInteractsWithVerticalSurfaces = useGlobaleStore(
     (state) => state.pointerInteractsWithVerticalSurfaces
   );
+  const itemToAdd = useGlobaleStore((state) => state.itemToAdd);
+  const showAddItemMenu = useGlobaleStore((state) => state.showAddItemMenu);
 
   const addItemOnSelect = useCallback(
     (cartesianPosition: Vector3, quaternion: Quaternion) => {
+      // setShowAddItemMenu(true, {
+      //   pos: cartesianPosition.toArray(),
+      //   quat: quaternion.toArray() as [number, number, number, number],
+      // });
       const item: SceneItem = {
         id: uuid4(),
-        pos: cartesianPosition.clone(),
-        quat: quaternion.clone(),
-        type: "pointer",
+        positionAndRotation: {
+          pos: cartesianPosition.toArray(),
+          quat: quaternion.toArray() as [number, number, number, number],
+        },
+        type: itemToAdd, 
       };
 
       addSceneItem(item);
-      console.log("Added item", item);
+      console.log("Opened addition menu");
     },
-    [addSceneItem]
+    [addSceneItem, itemToAdd]
   );
 
   console.log("Scene items", sceneItems);
@@ -72,6 +80,7 @@ export const ThreeScene: FunctionComponent = () => {
         onSelect={addItemOnSelect}
         visible={showPointer}
         interactsWithVerticalSurfaces={pointerInteractsWithVerticalSurfaces}
+        enabled={!showAddItemMenu}
       />
       <SceneItems items={sceneItems} />
     </Canvas>
