@@ -5,13 +5,13 @@ import { UltraGlobeMesh } from "./UltraGlobeMesh";
 import { type Map } from "@submodules/ultraglobe/src/Map";
 import { PointerPreview } from "./PointerPreview";
 import { v4 as uuid4 } from "uuid";
-import { Box, Sphere } from "@react-three/drei";
 import { useGlobaleStore, type SceneItem } from "@/app/store";
 import { SceneItems } from "./SceneItems";
 
 export const ThreeScene: FunctionComponent = () => {
   const ultraglobeMapRef = useRef<Map | null>(null);
 
+  const showPointer = useGlobaleStore((state) => state.showPointer);
   const sceneItems = useGlobaleStore((state) => state.sceneItems);
   const addSceneItem = useGlobaleStore((state) => state.addSceneItem);
 
@@ -65,15 +65,9 @@ export const ThreeScene: FunctionComponent = () => {
       <PointerPreview
         ultraGlobeMapRef={ultraglobeMapRef}
         onSelect={addItemOnSelect}
+        visible={showPointer}
       />
       <SceneItems items={sceneItems} />
-
-      <Box
-        position={[5789550.501385905, 825334.8852818692, 2539897.4153787824]}
-        args={[20, 20, 20]}
-      >
-        <meshBasicMaterial color={0xff0000} />
-      </Box>
     </Canvas>
   );
 };

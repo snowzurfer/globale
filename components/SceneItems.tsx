@@ -4,7 +4,6 @@
 
 import { type SceneItem } from "@/app/store";
 import { useKeepScale } from "@/hooks/useKeepScale";
-import { Box, Sphere } from "@react-three/drei";
 import { type GroupProps } from "@react-three/fiber";
 import { FunctionComponent, useEffect, useRef } from "react";
 import { type Group } from "three";

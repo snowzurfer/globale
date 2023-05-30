@@ -30,11 +30,13 @@ export type OnSelectCallback = (
 export interface Props {
   ultraGlobeMapRef: MutableRefObject<Map | null>;
   onSelect?: OnSelectCallback;
+  visible?: boolean;
 }
 
 export const PointerPreview: FunctionComponent<Props> = ({
   ultraGlobeMapRef,
   onSelect,
+  visible = true,
 }) => {
   const gl = useThree((state) => state.gl);
 
@@ -139,5 +141,5 @@ export const PointerPreview: FunctionComponent<Props> = ({
     group.scale.setScalar(distance / 1000);
   });
 
-  return <Pointer ref={pointerGroupRef} />;
+  return <Pointer ref={pointerGroupRef} visible={visible} />;
 };

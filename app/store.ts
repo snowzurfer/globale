@@ -18,6 +18,12 @@ export interface GlobaleStore {
   setUser: (user: User) => void;
   isSignedIn: boolean;
   setIsSignedIn: (isSignedIn: boolean) => void;
+ 
+  hasClickedOnce: boolean;
+  setHasClickedOnce: (hasClickedOnce: boolean) => void;  
+
+  showPointer: boolean;
+  setShowPointer: (showPointer: boolean) => void;
 
   sceneItems: SceneItem[];
   addSceneItem: (item: SceneItem) => void;
@@ -28,6 +34,12 @@ export const useGlobaleStore = create<GlobaleStore>()((set) => ({
   isSignedIn: false,
   setUser: (user) => set({ user }),
   setIsSignedIn: (isSignedIn: boolean) => set({ isSignedIn }),
+
+  hasClickedOnce: false,
+  setHasClickedOnce: (hasClickedOnce) => set({ hasClickedOnce }),
+
+  showPointer: true,
+  setShowPointer: (showPointer) => set({ showPointer }),
 
   sceneItems: [],
   addSceneItem: (item) =>
