@@ -8,7 +8,11 @@ import { ThreeSceneUI } from "@/components/ThreeSceneUI";
 
 const Home = () => {
   const hasClickedOnce = useGlobaleStore((state) => state.hasClickedOnce);
+  const googleTilesAPIKey = useGlobaleStore((state) => state.googleTilesAPIKey);
   const setHasClickedOnce = useGlobaleStore((state) => state.setHasClickedOnce);
+
+  const setup = hasClickedOnce;
+
   return (
     <main className="w-full h-screen" onContextMenu={(e) => e.preventDefault()}>
       <div className="absolute inset-0">
@@ -16,11 +20,11 @@ const Home = () => {
           <ThreeScene />
         </ErrorBoundary>
 
-        {!hasClickedOnce && (
+        {!setup && (
           <WelcomeModalView setHasClickedOnce={setHasClickedOnce} />
         )}
 
-        {hasClickedOnce && <ThreeSceneUI />}
+        {setup && <ThreeSceneUI />}
       </div>
     </main>
   );

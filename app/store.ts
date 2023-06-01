@@ -1,7 +1,11 @@
 import { create } from "zustand";
+import { onAuthStateChanged } from "firebase/auth";
+import { firAuth } from "./firebase";
+import { generateUsername } from "friendly-username-generator";
 
 export interface User {
   id: string;
+  username: string;
   email?: string;
 }
 
@@ -44,8 +48,9 @@ export type ModalType = "settings" | "credits" | "items";
 export interface GlobaleStore {
   user?: User;
   setUser: (user: User) => void;
-  isSignedIn: boolean;
-  setIsSignedIn: (isSignedIn: boolean) => void;
+
+  googleTilesAPIKey?: string;
+  setGoogleTilesAPIKey: (googleTilesAPIKey?: string) => void;
 
   hasClickedOnce: boolean;
   setHasClickedOnce: (hasClickedOnce: boolean) => void;
@@ -84,9 +89,10 @@ export interface GlobaleStore {
 
 export const useGlobaleStore = create<GlobaleStore>()((set, get) => ({
   user: undefined,
-  isSignedIn: false,
   setUser: (user) => set({ user }),
-  setIsSignedIn: (isSignedIn: boolean) => set({ isSignedIn }),
+
+  googleTilesAPIKey: undefined,
+  setGoogleTilesAPIKey: (googleTilesAPIKey) => set({ googleTilesAPIKey }),
 
   hasClickedOnce: false,
   setHasClickedOnce: (hasClickedOnce) => set({ hasClickedOnce }),
@@ -151,3 +157,16 @@ export const useGlobaleStore = create<GlobaleStore>()((set, get) => ({
     }
   },
 }));
+
+// Subscribe to firebase auth changes and update the store
+onAuthStateChanged(firAuth, (user) => {
+  console.log("onAuthStateChanged", user);
+  if (user) {
+    useGlobaleStore.setState({
+      user: { id: user.uid, username: generateUsername() },
+    });
+    console.log("Set state for user");
+  } else {
+    useGlobaleStore.setState({ user: undefined });
+  }
+});

@@ -1,6 +1,8 @@
 import { FunctionComponent, PropsWithChildren } from "react";
 // import firebase from 'firebase/app';
 // import 'firebase/auth';
+import { firAuth } from "@/app/firebase";
+import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { SwitchWithlabel } from "./SwitchWithLabel";
 import { useGlobaleStore } from "@/app/store";
 import { Modal } from "./Modal";
@@ -47,14 +49,32 @@ export const SettingsModal: FunctionComponent<{ onClose: () => void }> = ({
   const clickToAdd = useGlobaleStore((state) => state.clickToAdd);
   const setClickToAdd = useGlobaleStore((state) => state.setClickToAdd);
 
+  const user = useGlobaleStore((state) => state.user);
+
   const handleSignIn = async () => {
-    // const provider = new firebase.auth.GoogleAuthProvider();
-    // await firebase.auth().signInWithPopup(provider);
-    onClose();
+    const provider = new GoogleAuthProvider();
+
+    try {
+      const result = await signInWithPopup(firAuth, provider);
+      console.log("Login result: ", result);
+    } catch (error) {
+      console.log("Login error: ", error);
+      return;
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await firAuth.signOut();
+    } catch (error) {
+      console.log("Logout error: ", error);
+      return;
+    }
   };
 
   return (
     <Modal title="Settings" onClose={onClose}>
+      <div id="firebaseui-auth-container" />
       <div className="flex flex-col items-start w-full">
         <SettingsSection title="Editor">
           <SwitchWithlabel
@@ -75,12 +95,29 @@ export const SettingsModal: FunctionComponent<{ onClose: () => void }> = ({
         </SettingsSection>
 
         <SettingsSection title="Account">
-          <button
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-500 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            // onClick={handleSignIn}
-          >
-            Log in with Google
-          </button>
+          {user && (
+            <div className="flex flex-col items-start w-full gap-2">
+              <p className="text-sm text-gray-500 ">User ID: {user.id}</p>
+              <p className="text-sm text-gray-500 ">Username: {user.username}</p>
+              <p className="text-xs text-gray-400">{user.email}</p>
+              <button
+                className="w-full px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                onClick={handleSignOut}
+              >
+                Log out
+              </button>
+            </div>
+          )}
+          {!user && (
+            <div className="flex flex-col items-start w-full gap-2">
+              <button
+                className="w-full px-4 py-2 text-sm font-medium text-white bg-blue-500 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                onClick={handleSignIn}
+              >
+                Log in with Google
+              </button>
+            </div>
+          )}
         </SettingsSection>
 
         <p className="mt-6 font-secondary w-full text-center text-xs text-gray-400">
