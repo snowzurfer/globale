@@ -118,7 +118,10 @@ export const useGlobaleStore = create<GlobaleStore>()((set, get) => ({
   setHasClickedOnce: (hasClickedOnce) => {
     set({ hasClickedOnce });
     // Save to local storage
-    localStorage.setItem(HAS_CLICKED_ONCE_KEY, JSON.stringify(hasClickedOnce));
+    window.localStorage.setItem(
+      HAS_CLICKED_ONCE_KEY,
+      JSON.stringify(hasClickedOnce)
+    );
   },
 
   modal: undefined,
@@ -327,8 +330,7 @@ export const addSceneItem = (item: SceneItem) => {
 };
 
 // Initialize from local storage the parts that use local storage
-const initLocalStorage = () => {
-  const hasClickedOnce = localStorage.getItem(HAS_CLICKED_ONCE_KEY);
+export const initLocalStorage = () => {
+  const hasClickedOnce = window.localStorage.getItem(HAS_CLICKED_ONCE_KEY);
   useGlobaleStore.setState({ hasClickedOnce: !!hasClickedOnce });
 };
-initLocalStorage();

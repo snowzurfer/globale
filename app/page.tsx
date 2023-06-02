@@ -2,11 +2,16 @@
 
 import { ThreeScene } from "@/components/ThreeScene";
 import { ErrorBoundary } from "react-error-boundary";
-import { useGlobaleStore } from "./store";
+import { initLocalStorage, useGlobaleStore } from "./store";
 import { WelcomeModalView } from "@/components/WelcomeModalView";
 import { ThreeSceneUI } from "@/components/ThreeSceneUI";
+import { useEffect } from "react";
 
 const Home = () => {
+  useEffect(() => {
+    initLocalStorage();
+  }, []);
+
   const hasClickedOnce = useGlobaleStore((state) => state.hasClickedOnce);
   const googleTilesAPIKey = useGlobaleStore((state) => state.googleTilesAPIKey);
   const setHasClickedOnce = useGlobaleStore((state) => state.setHasClickedOnce);
