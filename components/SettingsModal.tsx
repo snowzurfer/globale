@@ -96,25 +96,26 @@ export const SettingsModal: FunctionComponent<{ onClose: () => void }> = ({
 
         <SettingsSection title="Account">
           {user && (
-            <div className="flex flex-col items-start w-full gap-2">
-              <p className="text-sm text-gray-500 ">User ID: {user.id}</p>
-              <p className="text-sm text-gray-500 ">Username: {user.username}</p>
-              <p className="text-xs text-gray-400">{user.email}</p>
+            <div className="flex flex-col items-start w-full gap-2 text-sm text-gray-500">
+              <p>User ID: {user.id}</p>
+              <p>Username: {user.username}</p>
+              {/* <p className="text-xs text-gray-400">{user.email}</p> */}
+              {user.isAnonymous && <p>(Signed in Anonymously)</p>}
+              {user.isAnonymous && (
+                <div className="flex flex-col items-start w-full">
+                  <button
+                    className="w-full px-4 py-2 text-sm font-medium text-white bg-blue-500 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    onClick={handleSignIn}
+                  >
+                    Log in with Google
+                  </button>
+                </div>
+              )}
               <button
                 className="w-full px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                 onClick={handleSignOut}
               >
                 Log out
-              </button>
-            </div>
-          )}
-          {!user && (
-            <div className="flex flex-col items-start w-full gap-2">
-              <button
-                className="w-full px-4 py-2 text-sm font-medium text-white bg-blue-500 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                onClick={handleSignIn}
-              >
-                Log in with Google
               </button>
             </div>
           )}

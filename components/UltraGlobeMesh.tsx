@@ -6,21 +6,26 @@ import { Map } from "@jdultra/ultra-globe/src/Map";
 // @ts-ignore
 import { GoogleMap3DTileLayer } from "@jdultra/ultra-globe/src/layers/GoogleMap3DTileLayer";
 import { forwardRef, useEffect, useRef } from "react";
+import { useGlobaleStore } from "@/app/store";
 
 export const UltraGlobeMesh = forwardRef<Map>(({}, ref) => {
   const camera = useThree((state) => state.camera);
   const scene = useThree((state) => state.scene);
   const glRenderer = useThree((state) => state.gl);
 
+  const googleTilesAPIKey = useGlobaleStore((state) => state.googleTilesAPIKey);
+
   const ultraglobeMapRef = useRef<Map | null>(null);
 
   useEffect(() => {
+    if (!googleTilesAPIKey) return;
+
     let map = new Map({ renderer: glRenderer, scene, camera });
     var googleMaps3DTiles = new GoogleMap3DTileLayer({
       id: 0,
       name: "Google Maps 3D Tiles",
       visible: true,
-      apiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "",
+      apiKey: googleTilesAPIKey,
       loadOutsideView: true,
       displayCopyright: true,
       geometricErrorMultiplier: 3,
@@ -38,7 +43,7 @@ export const UltraGlobeMesh = forwardRef<Map>(({}, ref) => {
     ultraglobeMapRef.current = map;
 
     console.log("Setup");
-  }, [camera, glRenderer, ref, scene]);
+  }, [camera, glRenderer, googleTilesAPIKey, ref, scene]);
 
   useFrame(() => {
     const ultraglobeMap = ultraglobeMapRef.current;

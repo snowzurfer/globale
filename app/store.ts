@@ -3,12 +3,13 @@ import { onAuthStateChanged } from "firebase/auth";
 import { firAuth, firRealtimeDB } from "./firebase";
 import { generateUsername } from "friendly-username-generator";
 import proj4 from "proj4";
-import { onValue, ref, remove, set } from "firebase/database";
+import { get, onValue, ref, remove, set } from "firebase/database";
 
 export interface User {
   id: string;
   username: string;
   email?: string;
+  isAnonymous: boolean;
 }
 
 export type SceneItemType = "sphere" | "box" | "model" | "pointer" | "label";
@@ -48,12 +49,14 @@ export interface SceneItemAndIndex {
 
 export type ModalType = "settings" | "credits" | "items";
 
+const HAS_CLICKED_ONCE_KEY = "hasClickedOnce";
+
 export interface GlobaleStore {
   user?: User;
   setUser: (user: User) => void;
 
   googleTilesAPIKey?: string;
-  setGoogleTilesAPIKey: (googleTilesAPIKey?: string) => void;
+  setGoogleTilesAPIKey: (googleTilesAPIKey?: string) => Promise<void>;
 
   hasClickedOnce: boolean;
   setHasClickedOnce: (hasClickedOnce: boolean) => void;
@@ -101,10 +104,22 @@ export const useGlobaleStore = create<GlobaleStore>()((set, get) => ({
   setUser: (user) => set({ user }),
 
   googleTilesAPIKey: undefined,
-  setGoogleTilesAPIKey: (googleTilesAPIKey) => set({ googleTilesAPIKey }),
+  setGoogleTilesAPIKey: async (googleTilesAPIKey) => {
+    // Store to firebase if logged in
+    const user = get().user;
+    if (user) {
+      await setGoogleTilesAPIKeyToFirebase(googleTilesAPIKey ?? "", user.id);
+    }
+
+    set({ googleTilesAPIKey });
+  },
 
   hasClickedOnce: false,
-  setHasClickedOnce: (hasClickedOnce) => set({ hasClickedOnce }),
+  setHasClickedOnce: (hasClickedOnce) => {
+    set({ hasClickedOnce });
+    // Save to local storage
+    localStorage.setItem(HAS_CLICKED_ONCE_KEY, JSON.stringify(hasClickedOnce));
+  },
 
   modal: undefined,
   setModal: (modal) => set({ modal }),
@@ -234,11 +249,27 @@ onAuthStateChanged(firAuth, (user) => {
   console.log("onAuthStateChanged", user);
   if (user) {
     useGlobaleStore.setState({
-      user: { id: user.uid, username: generateUsername() },
+      user: {
+        id: user.uid,
+        username: generateUsername(),
+        isAnonymous: user.isAnonymous,
+      },
     });
-    console.log("Set state for user");
+    console.log("Set state for user, user: ", user.uid);
+
+    // Fetch the google tiles api key
+    const userId = user.uid;
+    const googleTilesAPIKeyRef = ref(
+      firRealtimeDB,
+      `users/${userId}/googleTilesAPIKey`
+    );
+    get(googleTilesAPIKeyRef).then((snapshot) => {
+      const googleTilesAPIKey = snapshot.val();
+      console.log("Got googleTilesAPIKey", googleTilesAPIKey);
+      useGlobaleStore.setState({ googleTilesAPIKey });
+    });
   } else {
-    useGlobaleStore.setState({ user: undefined });
+    useGlobaleStore.setState({ user: undefined, googleTilesAPIKey: undefined });
   }
 });
 
@@ -263,6 +294,10 @@ const addItemToFirebase = async (item: SceneItem) => {
 
 const deleteItemFromFirebase = async (itemId: SceneItem["id"]) => {
   remove(ref(firRealtimeDB, `sceneItems/${itemId}`));
+};
+
+const setGoogleTilesAPIKeyToFirebase = async (key: string, userId: string) => {
+  await set(ref(firRealtimeDB, `users/${userId}/googleTilesAPIKey`), key);
 };
 
 // Subscribe to firebase changes and update the store
@@ -290,3 +325,10 @@ export const addSceneItem = (item: SceneItem) => {
   addItemToFirebase(item);
   useGlobaleStore.getState().addSceneItem(item);
 };
+
+// Initialize from local storage the parts that use local storage
+const initLocalStorage = () => {
+  const hasClickedOnce = localStorage.getItem(HAS_CLICKED_ONCE_KEY);
+  useGlobaleStore.setState({ hasClickedOnce: !!hasClickedOnce });
+};
+initLocalStorage();

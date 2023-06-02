@@ -2,8 +2,6 @@ import { FunctionComponent, PropsWithChildren } from "react";
 // import firebase from 'firebase/app';
 // import 'firebase/auth';
 import { XMarkIcon } from "@heroicons/react/24/outline";
-import { SwitchWithlabel } from "./SwitchWithLabel";
-import { useGlobaleStore } from "@/app/store";
 
 export interface Props extends PropsWithChildren {
   title: string;

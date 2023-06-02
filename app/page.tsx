@@ -10,8 +10,9 @@ const Home = () => {
   const hasClickedOnce = useGlobaleStore((state) => state.hasClickedOnce);
   const googleTilesAPIKey = useGlobaleStore((state) => state.googleTilesAPIKey);
   const setHasClickedOnce = useGlobaleStore((state) => state.setHasClickedOnce);
+  const user = useGlobaleStore((state) => state.user);
 
-  const setup = hasClickedOnce;
+  const setup = hasClickedOnce && googleTilesAPIKey && user;
 
   return (
     <main className="w-full h-screen" onContextMenu={(e) => e.preventDefault()}>
@@ -20,14 +21,12 @@ const Home = () => {
           <ThreeScene />
         </ErrorBoundary>
 
-        {!setup && (
-          <WelcomeModalView setHasClickedOnce={setHasClickedOnce} />
-        )}
+        {!setup && <WelcomeModalView setHasClickedOnce={setHasClickedOnce} />}
 
         {setup && <ThreeSceneUI />}
       </div>
     </main>
   );
-}
+};
 
 export default Home;
