@@ -23,6 +23,7 @@
     "meshline": "^3.1.6",
     "next": "13.4.3",
     "postcss": "8.4.23",
+    "proj4": "^2.9.0",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-error-boundary": "^4.0.4",
@@ -40,6 +41,7 @@
     "@types/react-dom": "18.2.4",
     "@types/three": "^0.152.0",
     "@types/uuid": "^9.0.1",
+    "@types/proj4": "^2.5.2",
     "encoding": "^0.1.13"
   }
 }

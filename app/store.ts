@@ -1,7 +1,9 @@
 import { create } from "zustand";
 import { onAuthStateChanged } from "firebase/auth";
-import { firAuth } from "./firebase";
+import { firAuth, firRealtimeDB } from "./firebase";
 import { generateUsername } from "friendly-username-generator";
+import proj4 from "proj4";
+import { onValue, ref, remove, set } from "firebase/database";
 
 export interface User {
   id: string;
@@ -36,6 +38,7 @@ export interface SceneItem {
    */
   model?: string;
   scaleInvariant: boolean;
+  creatorUserId: string;
 }
 
 export interface SceneItemAndIndex {
@@ -69,8 +72,13 @@ export interface GlobaleStore {
   clickToAdd: boolean;
   setClickToAdd: (clickToAdd: boolean) => void;
 
+  isDoingBlockingUpdateToFirebase: boolean;
+  setIsDoingBlockingUpdateToFirebase: (
+    isDoingBlockingUpdateToFirebase: boolean
+  ) => void;
+
   sceneItems: SceneItem[];
-  addSceneItem: (item: SceneItem) => void;
+  addSceneItem: (item: SceneItem, toFirebase?: Boolean) => Promise<void>;
   updateSceneItem: (item: SceneItem, atIndex: number) => void;
 
   showAddItemMenu: boolean;
@@ -85,6 +93,7 @@ export interface GlobaleStore {
   setHoveredItem: (itemId?: SceneItem["id"]) => void;
   selectedItem?: SceneItemAndIndex;
   setSelectedItem: (itemId?: SceneItem["id"]) => void;
+  deleteItem: (itemId: SceneItem["id"], toFirebase?: Boolean) => Promise<void>;
 }
 
 export const useGlobaleStore = create<GlobaleStore>()((set, get) => ({
@@ -111,9 +120,19 @@ export const useGlobaleStore = create<GlobaleStore>()((set, get) => ({
   clickToAdd: true,
   setClickToAdd: (clickToAdd) => set({ clickToAdd }),
 
+  isDoingBlockingUpdateToFirebase: false,
+  setIsDoingBlockingUpdateToFirebase: (isDoingBlockingUpdateToFirebase) =>
+    set({ isDoingBlockingUpdateToFirebase }),
+
   sceneItems: [],
-  addSceneItem: (item) =>
-    set((state) => ({ sceneItems: [...state.sceneItems, item] })),
+  addSceneItem: async (item, toFirebase = false) => {
+    if (toFirebase) {
+      set({ isDoingBlockingUpdateToFirebase: true });
+      await addItemToFirebase(item);
+      set({ isDoingBlockingUpdateToFirebase: false });
+    }
+    set((state) => ({ sceneItems: [...state.sceneItems, item] }));
+  },
 
   showAddItemMenu: false,
   pointerPosition: {
@@ -156,7 +175,59 @@ export const useGlobaleStore = create<GlobaleStore>()((set, get) => ({
       set({ selectedItem: undefined });
     }
   },
+  deleteItem: async (itemId, toFirebase = false) => {
+    // Check that the item exists
+    const index = get().sceneItems.findIndex((item) => item.id === itemId);
+    if (index === -1) return;
+
+    if (toFirebase) {
+      set({ isDoingBlockingUpdateToFirebase: true });
+      await deleteItemFromFirebase(itemId);
+      set({ isDoingBlockingUpdateToFirebase: false });
+    }
+
+    // Delete the item
+    set((state) => {
+      const newSceneItems = [...state.sceneItems];
+      newSceneItems.splice(index, 1);
+      return { sceneItems: newSceneItems };
+    });
+  },
 }));
+
+// Geo conversion
+// Gotten from https://epsg.io/4978
+proj4.defs(
+  "EPSG:4978",
+  "+proj=geocent +datum=WGS84 +units=m +no_defs +type=crs"
+);
+// Gotten from https://epsg.io/4326
+proj4.defs("EPSG:4326", "+proj=longlat +datum=WGS84 +no_defs +type=crs");
+export const converterToGeo = proj4("EPSG:4326", "EPSG:4978");
+
+export const convertCartesianToGeo = (cartesian: [number, number, number]) => {
+  const converted = converterToGeo.inverse([
+    cartesian[2],
+    cartesian[0],
+    cartesian[1],
+  ]);
+
+  if (converted.length !== 3) {
+    throw new Error("Converted length is not 3");
+  }
+
+  return converted;
+};
+
+export const convertGeoToCartesian = (geo: [number, number, number]) => {
+  const converted = converterToGeo.forward(geo);
+
+  if (converted.length !== 3) {
+    throw new Error("Converted length is not 3");
+  }
+
+  return [converted[1], converted[2], converted[0]] as [number, number, number];
+};
 
 // Subscribe to firebase auth changes and update the store
 onAuthStateChanged(firAuth, (user) => {
@@ -170,3 +241,52 @@ onAuthStateChanged(firAuth, (user) => {
     useGlobaleStore.setState({ user: undefined });
   }
 });
+
+// Firebase Realtime Database functions
+const addItemToFirebase = async (item: SceneItem) => {
+  // Convert from cartesian to geo
+  const converted = convertCartesianToGeo(item.positionAndRotation.pos);
+
+  /**
+   * This is the same as the item, but with the position converted to geo
+   */
+  const newItem: SceneItem = {
+    ...item,
+    positionAndRotation: {
+      ...item.positionAndRotation,
+      pos: converted as [number, number, number],
+    },
+  };
+
+  await set(ref(firRealtimeDB, `sceneItems/${item.id}`), newItem);
+};
+
+const deleteItemFromFirebase = async (itemId: SceneItem["id"]) => {
+  remove(ref(firRealtimeDB, `sceneItems/${itemId}`));
+};
+
+// Subscribe to firebase changes and update the store
+onValue(ref(firRealtimeDB, "sceneItems"), (snapshot) => {
+  const data = snapshot.val();
+  if (!data) return;
+
+  const items = Object.values(data) as SceneItem[];
+
+  const mapped = items.map((item) => ({
+    ...item,
+    positionAndRotation: {
+      ...item.positionAndRotation,
+      pos: convertGeoToCartesian(item.positionAndRotation.pos),
+    },
+  }));
+
+  useGlobaleStore.setState({
+    sceneItems: mapped,
+  });
+});
+
+// Combine store and firebase so that when the user changes, we can update the firebase
+export const addSceneItem = (item: SceneItem) => {
+  addItemToFirebase(item);
+  useGlobaleStore.getState().addSceneItem(item);
+};

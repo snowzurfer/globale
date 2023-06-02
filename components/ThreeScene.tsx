@@ -1,5 +1,11 @@
 import { Canvas } from "@react-three/fiber";
-import { FunctionComponent, useCallback, useEffect, useRef, useState } from "react";
+import {
+  FunctionComponent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { Color, type Quaternion, Vector3 } from "three";
 import { UltraGlobeMesh } from "./UltraGlobeMesh";
 // @ts-ignore
@@ -8,6 +14,9 @@ import { PointerPreview } from "./PointerPreview";
 import { useGlobaleStore, type SceneItem } from "@/app/store";
 import { SceneItems } from "./SceneItems";
 import { v4 as uuid4 } from "uuid";
+import { Box } from "@react-three/drei";
+import { ref, set } from "firebase/database";
+import { firRealtimeDB } from "@/app/firebase";
 
 export const ThreeScene: FunctionComponent = () => {
   const ultraglobeMapRef = useRef<Map | null>(null);
@@ -20,6 +29,7 @@ export const ThreeScene: FunctionComponent = () => {
   );
   const itemToAdd = useGlobaleStore((state) => state.itemToAdd);
   const showAddItemMenu = useGlobaleStore((state) => state.showAddItemMenu);
+  const user = useGlobaleStore((state) => state.user);
 
   const addItemOnSelect = useCallback(
     (cartesianPosition: Vector3, quaternion: Quaternion) => {
@@ -34,22 +44,25 @@ export const ThreeScene: FunctionComponent = () => {
           quat: quaternion.toArray() as [number, number, number, number],
         },
         type: itemToAdd,
-        color: "#00A3E1",
+        // color: "#00A3E1",
+        color: "purple",
         scaleInvariant: true,
+        creatorUserId: user?.id ?? "anonymous",
       };
 
-      addSceneItem(item);
+      addSceneItem(item, true);
+
       console.log("Opened addition menu");
     },
-    [addSceneItem, itemToAdd]
+    [addSceneItem, itemToAdd, user?.id]
   );
 
   return (
     <Canvas
       // These arguments are all copied over from UltraGlobe
       camera={{
-        position: [40000000, 0, 0],
-        up: [0, 0, 1],
+        position: [0, 0, 40000000],
+        up: [0, 1, 0],
         far: 50000000,
         near: 0.01,
         fov: 30,
@@ -69,7 +82,7 @@ export const ThreeScene: FunctionComponent = () => {
         // of the Canvas
         //
         // This value was found from the original source code of UltraGlobe.
-        state.camera.lookAt(new Vector3(0, 0, 10000));
+        state.camera.lookAt(new Vector3(0, 10000, 0));
       }}
     >
       <ambientLight />
@@ -83,6 +96,15 @@ export const ThreeScene: FunctionComponent = () => {
         enabled={!showAddItemMenu}
       />
       <SceneItems items={sceneItems} />
+      <Box args={[400000, 400000, 400000]} position={[7398100, 0, 0]}>
+        <meshBasicMaterial color="red" />
+      </Box>
+      <Box args={[400000, 400000, 400000]} position={[0, 7398100, 0]}>
+        <meshBasicMaterial color="green" />
+      </Box>
+      <Box args={[400000, 400000, 400000]} position={[0, 0, 7398100]}>
+        <meshBasicMaterial color="blue" />
+      </Box>
     </Canvas>
   );
 };

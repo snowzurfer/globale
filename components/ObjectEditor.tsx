@@ -1,7 +1,6 @@
 import { useGlobaleStore, type SceneItemAndIndex } from "@/app/store";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { type FunctionComponent } from "react";
-import { SettingsSection } from "./SettingsModal";
 import { SwitchWithlabel } from "./SwitchWithLabel";
 
 export interface Props {
@@ -9,15 +8,15 @@ export interface Props {
   onClose: () => void;
 }
 
+// Return a floating panel that is of fixed size, extends in length
+// and the width is fixed.
 export const ObjectEditorPanel: FunctionComponent<Props> = ({
   sceneItem,
   onClose,
 }) => {
-  // Return a floating panel that is of fixed size, extends in length
-  // and the width is fixed.
-
   const updateSceneItem = useGlobaleStore((state) => state.updateSceneItem);
   const sceneItems = useGlobaleStore((state) => state.sceneItems);
+  const deleteItem = useGlobaleStore((state) => state.deleteItem);
 
   return (
     <div className="w-64 bg-white shadow-lg rounded-md flex flex-col p-4 gap-2">
@@ -65,9 +64,82 @@ export const ObjectEditorPanel: FunctionComponent<Props> = ({
           }}
         />
       </div>
-
-      <div className="w-full">
-        <p className="text-xs text-center text-gray-500">Created by: Nathan</p>
+      <div className="flex flex-row items-center justify-between w-full gap-1">
+        <span className="text-xs text-gray-500">Pos</span>
+        <input
+          type="number"
+          className="w-full h-8 rounded-md text-xs"
+          value={sceneItems[sceneItem.index].positionAndRotation.pos[0]}
+          onChange={(e) => {
+            updateSceneItem(
+              {
+                ...sceneItems[sceneItem.index],
+                positionAndRotation: {
+                  ...sceneItems[sceneItem.index].positionAndRotation,
+                  pos: [
+                    parseInt(e.target.value),
+                    sceneItems[sceneItem.index].positionAndRotation.pos[1],
+                    sceneItems[sceneItem.index].positionAndRotation.pos[2],
+                  ],
+                },
+              },
+              sceneItem.index
+            );
+          }}
+        />
+        <input
+          type="number"
+          className="w-full h-8 rounded-md text-xs"
+          value={sceneItems[sceneItem.index].positionAndRotation.pos[1]}
+          onChange={(e) => {
+            updateSceneItem(
+              {
+                ...sceneItems[sceneItem.index],
+                positionAndRotation: {
+                  ...sceneItems[sceneItem.index].positionAndRotation,
+                  pos: [
+                    sceneItems[sceneItem.index].positionAndRotation.pos[0],
+                    parseInt(e.target.value),
+                    sceneItems[sceneItem.index].positionAndRotation.pos[2],
+                  ],
+                },
+              },
+              sceneItem.index
+            );
+          }}
+        />
+        <input
+          type="number"
+          className="w-full h-8 rounded-md text-xs"
+          value={sceneItems[sceneItem.index].positionAndRotation.pos[2]}
+          onChange={(e) => {
+            updateSceneItem(
+              {
+                ...sceneItems[sceneItem.index],
+                positionAndRotation: {
+                  ...sceneItems[sceneItem.index].positionAndRotation,
+                  pos: [
+                    sceneItems[sceneItem.index].positionAndRotation.pos[0],
+                    sceneItems[sceneItem.index].positionAndRotation.pos[1],
+                    parseInt(e.target.value),
+                  ],
+                },
+              },
+              sceneItem.index
+            );
+          }}
+        />
+      </div>
+      <div className="flex flex-row items-center justify-between w-full gap-1">
+        <button
+          className="w-full h-8 rounded-md text-xs bg-red-500 text-white"
+          onClick={async () => {
+            await deleteItem(sceneItem.itemId, true);
+            onClose();
+          }}
+        >
+          Delete
+        </button>
       </div>
     </div>
   );

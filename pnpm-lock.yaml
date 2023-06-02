@@ -19,6 +19,9 @@ importers:
       '@react-three/fiber':
         specifier: ^8.13.0
         version: 8.13.0(react-dom@18.2.0)(react@18.2.0)(three@0.152.2)
+      '@types/proj4':
+        specifier: ^2.5.2
+        version: 2.5.2
       autoprefixer:
         specifier: 10.4.14
         version: 10.4.14(postcss@8.4.23)
@@ -46,6 +49,9 @@ importers:
       postcss:
         specifier: 8.4.23
         version: 8.4.23
+      proj4:
+        specifier: ^2.9.0
+        version: 2.9.0
       react:
         specifier: 18.2.0
         version: 18.2.0
@@ -2404,6 +2410,10 @@ packages:
 
   /@types/offscreencanvas@2019.7.0:
     resolution: {integrity: sha512-PGcyveRIpL1XIqK8eBsmRBt76eFgtzuPiSTyKHZxnGemp2yzGzWpjYKAfK3wIMiU7eH+851yEpiuP8JZerTmWg==}
+    dev: false
+
+  /@types/proj4@2.5.2:
+    resolution: {integrity: sha512-/Nmfn9p08yaYw6xo5f2b0L+2oHk2kZeOkp5v+4VCeNfq+ETlLQbmHmC97/pjDIEZy8jxwz7pdPpwNzDHM5cuJw==}
     dev: false
 
   /@types/prop-types@15.7.5:
