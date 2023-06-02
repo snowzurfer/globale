@@ -19,9 +19,6 @@ importers:
       '@react-three/fiber':
         specifier: ^8.13.0
         version: 8.13.0(react-dom@18.2.0)(react@18.2.0)(three@0.152.2)
-      '@types/proj4':
-        specifier: ^2.5.2
-        version: 2.5.2
       autoprefixer:
         specifier: 10.4.14
         version: 10.4.14(postcss@8.4.23)
@@ -86,6 +83,9 @@ importers:
       '@types/node':
         specifier: 20.2.1
         version: 20.2.1
+      '@types/proj4':
+        specifier: ^2.5.2
+        version: 2.5.2
       '@types/react':
         specifier: 18.2.6
         version: 18.2.6
@@ -2414,7 +2414,7 @@ packages:
 
   /@types/proj4@2.5.2:
     resolution: {integrity: sha512-/Nmfn9p08yaYw6xo5f2b0L+2oHk2kZeOkp5v+4VCeNfq+ETlLQbmHmC97/pjDIEZy8jxwz7pdPpwNzDHM5cuJw==}
-    dev: false
+    dev: true
 
   /@types/prop-types@15.7.5:
     resolution: {integrity: sha512-JCB8C6SnDoQf0cNycqd/35A7MjcnK+ZTqE7judS6o7utxUCg6imJg3QK2qzHKszlTjcj2cn+NwMB2i96ubpj7w==}
