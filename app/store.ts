@@ -12,13 +12,22 @@ export interface User {
   isAnonymous: boolean;
 }
 
-export type SceneItemType = "sphere" | "box" | "model" | "pointer" | "label";
+export type SceneItemType =
+  | "sphere"
+  | "box"
+  | "model"
+  | "pointer"
+  | "label"
+  | "dragon"
+  | "tree";
 export const ALL_SCENE_ITEM_TYPES: SceneItemType[] = [
   "sphere",
   "box",
   "model",
   "pointer",
   "label",
+  "dragon",
+  "tree",
 ];
 
 export interface PositionAndRotation {
@@ -223,6 +232,9 @@ proj4.defs(
 proj4.defs("EPSG:4326", "+proj=longlat +datum=WGS84 +no_defs +type=crs");
 export const converterToGeo = proj4("EPSG:4326", "EPSG:4978");
 
+/**
+ * Converts cartesian coordinates in EUS to geo coordinates
+ */
 export const convertCartesianToGeo = (cartesian: [number, number, number]) => {
   const converted = converterToGeo.inverse([
     cartesian[2],
@@ -237,6 +249,9 @@ export const convertCartesianToGeo = (cartesian: [number, number, number]) => {
   return converted;
 };
 
+/**
+ * Converts geo coordinates to cartesian coordinates in EUS
+ */
 export const convertGeoToCartesian = (geo: [number, number, number]) => {
   const converted = converterToGeo.forward(geo);
 
