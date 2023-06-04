@@ -3,7 +3,18 @@ import { onAuthStateChanged } from "firebase/auth";
 import { firAuth, firRealtimeDB } from "./firebase";
 import { generateUsername } from "friendly-username-generator";
 import proj4 from "proj4";
-import { get, onValue, ref, remove, set } from "firebase/database";
+import {
+  get,
+  onChildAdded,
+  onChildChanged,
+  onChildRemoved,
+  onValue,
+  ref,
+  remove,
+  set,
+  update,
+} from "firebase/database";
+import { use } from "react";
 
 export interface User {
   id: string;
@@ -90,6 +101,7 @@ export interface GlobaleStore {
   ) => void;
 
   sceneItems: SceneItem[];
+  idsToSceneItems: Map<SceneItem["id"], SceneItem>;
   addSceneItem: (item: SceneItem, toFirebase?: Boolean) => Promise<void>;
   updateSceneItem: (item: SceneItem, atIndex: number) => void;
 
@@ -105,6 +117,10 @@ export interface GlobaleStore {
   setHoveredItem: (itemId?: SceneItem["id"]) => void;
   selectedItem?: SceneItemAndIndex;
   setSelectedItem: (itemId?: SceneItem["id"]) => void;
+  interactingWithItemFromScene: boolean;
+  setInteractingWithItemFromScene: (
+    interactingWithItemFromScene: boolean
+  ) => void;
   deleteItem: (itemId: SceneItem["id"], toFirebase?: Boolean) => Promise<void>;
 }
 
@@ -152,13 +168,28 @@ export const useGlobaleStore = create<GlobaleStore>()((set, get) => ({
     set({ isDoingBlockingUpdateToFirebase }),
 
   sceneItems: [],
+  idsToSceneItems: new Map(),
   addSceneItem: async (item, toFirebase = false) => {
+    // If it's already added because it's the user's, don't add it again
+    if (get().idsToSceneItems.has(item.id)) return;
+
+    set((state) => {
+      let idsToSceneItems = state.idsToSceneItems;
+      if (item.creatorUserId === state.user?.id) {
+        idsToSceneItems = new Map(idsToSceneItems).set(item.id, item);
+      }
+
+      return {
+        sceneItems: [...state.sceneItems, item],
+        idsToSceneItems,
+      };
+    });
+
     if (toFirebase) {
       set({ isDoingBlockingUpdateToFirebase: true });
       await addItemToFirebase(item);
       set({ isDoingBlockingUpdateToFirebase: false });
     }
-    set((state) => ({ sceneItems: [...state.sceneItems, item] }));
   },
 
   showAddItemMenu: false,
@@ -172,12 +203,29 @@ export const useGlobaleStore = create<GlobaleStore>()((set, get) => ({
 
   itemToAdd: "pointer",
   setItemToAdd: (itemToAdd) => set({ itemToAdd }),
-  updateSceneItem: (item, atIndex) =>
+  updateSceneItem: (item, atIndex) => {
     set((state) => {
       const newSceneItems = [...state.sceneItems];
       newSceneItems[atIndex] = item;
-      return { sceneItems: newSceneItems };
-    }),
+
+      let newStateDiff = {
+        sceneItems: newSceneItems,
+        idsToSceneItems: state.idsToSceneItems,
+      };
+
+      if (state.idsToSceneItems.has(item.id)) {
+        newStateDiff = {
+          ...newStateDiff,
+          idsToSceneItems: new Map(state.idsToSceneItems),
+        };
+      }
+
+      return newStateDiff;
+    });
+
+    // Update firebase
+    updateItemInFirebase(item);
+  },
 
   hoveredItem: undefined,
   setHoveredItem: (itemId) => {
@@ -202,23 +250,51 @@ export const useGlobaleStore = create<GlobaleStore>()((set, get) => ({
       set({ selectedItem: undefined });
     }
   },
+
+  interactingWithItemFromScene: false,
+  setInteractingWithItemFromScene: (interactingWithItemFromScene) => {
+    set({ interactingWithItemFromScene });
+  },
+
   deleteItem: async (itemId, toFirebase = false) => {
     // Check that the item exists
     const index = get().sceneItems.findIndex((item) => item.id === itemId);
     if (index === -1) return;
+
+    // Delete the item
+    set((state) => {
+      const newSceneItems = [...state.sceneItems];
+      newSceneItems.splice(index, 1);
+
+      let newStateDiff = {
+        sceneItems: newSceneItems,
+        idsToSceneItems: state.idsToSceneItems,
+        selectedItem:
+          state.selectedItem?.itemId === itemId
+            ? undefined
+            : state.selectedItem,
+        hoveredItem:
+          state.hoveredItem?.itemId === itemId ? undefined : state.hoveredItem,
+      };
+
+      if (state.idsToSceneItems.has(itemId)) {
+        const newIdsToSceneItems = new Map(state.idsToSceneItems);
+        newIdsToSceneItems.delete(itemId);
+
+        newStateDiff = {
+          ...newStateDiff,
+          idsToSceneItems: newIdsToSceneItems,
+        };
+      }
+
+      return newStateDiff;
+    });
 
     if (toFirebase) {
       set({ isDoingBlockingUpdateToFirebase: true });
       await deleteItemFromFirebase(itemId);
       set({ isDoingBlockingUpdateToFirebase: false });
     }
-
-    // Delete the item
-    set((state) => {
-      const newSceneItems = [...state.sceneItems];
-      newSceneItems.splice(index, 1);
-      return { sceneItems: newSceneItems };
-    });
   },
 }));
 
@@ -310,6 +386,25 @@ const addItemToFirebase = async (item: SceneItem) => {
   await set(ref(firRealtimeDB, `sceneItems/${item.id}`), newItem);
 };
 
+const updateItemInFirebase = async (item: SceneItem) => {
+  // Convert from cartesian to geo
+  const converted = convertCartesianToGeo(item.positionAndRotation.pos);
+
+  /**
+   * This is the same as the item, but with the position converted to geo
+   * and the id removed
+   */
+  const newItem: SceneItem = {
+    ...item,
+    positionAndRotation: {
+      ...item.positionAndRotation,
+      pos: converted as [number, number, number],
+    },
+  };
+
+  await update(ref(firRealtimeDB, `sceneItems/${item.id}`), newItem);
+};
+
 const deleteItemFromFirebase = async (itemId: SceneItem["id"]) => {
   remove(ref(firRealtimeDB, `sceneItems/${itemId}`));
 };
@@ -319,30 +414,47 @@ const setGoogleTilesAPIKeyToFirebase = async (key: string, userId: string) => {
 };
 
 // Subscribe to firebase changes and update the store
-onValue(ref(firRealtimeDB, "sceneItems"), (snapshot) => {
-  const data = snapshot.val();
-  if (!data) return;
+const sceneItemsRef = ref(firRealtimeDB, "sceneItems");
 
-  const items = Object.values(data) as SceneItem[];
-
-  const mapped = items.map((item) => ({
-    ...item,
+onChildAdded(sceneItemsRef, (snapshot) => {
+  const newItem = snapshot.val() as SceneItem;
+  const mapped = {
+    ...newItem,
     positionAndRotation: {
-      ...item.positionAndRotation,
-      pos: convertGeoToCartesian(item.positionAndRotation.pos),
+      ...newItem.positionAndRotation,
+      pos: convertGeoToCartesian(newItem.positionAndRotation.pos),
     },
-  }));
+  };
 
-  useGlobaleStore.setState({
-    sceneItems: mapped,
+  useGlobaleStore.getState().addSceneItem(mapped, false);
+});
+
+onChildChanged(sceneItemsRef, (snapshot) => {
+  const updatedItem = snapshot.val() as SceneItem;
+  const mapped = {
+    ...updatedItem,
+    positionAndRotation: {
+      ...updatedItem.positionAndRotation,
+      pos: convertGeoToCartesian(updatedItem.positionAndRotation.pos),
+    },
+  };
+
+  // If the item is in the ids to scene items map, don't update it
+  if (useGlobaleStore.getState().idsToSceneItems.has(mapped.id)) return;
+
+  useGlobaleStore.setState((state) => {
+    return {
+      sceneItems: state.sceneItems.map((item) =>
+        item.id === updatedItem.id ? mapped : item
+      ),
+    };
   });
 });
 
-// Combine store and firebase so that when the user changes, we can update the firebase
-export const addSceneItem = (item: SceneItem) => {
-  addItemToFirebase(item);
-  useGlobaleStore.getState().addSceneItem(item);
-};
+onChildRemoved(sceneItemsRef, (snapshot) => {
+  const deletedItemId = snapshot.key as string;
+  useGlobaleStore.getState().deleteItem(deletedItemId, false);
+});
 
 // Initialize from local storage the parts that use local storage
 export const initLocalStorage = () => {

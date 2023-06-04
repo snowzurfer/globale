@@ -29,7 +29,6 @@ export type OnSelectCallback = (
 export interface Props {
   ultraGlobeMapRef: MutableRefObject<Map | null>;
   onSelect?: OnSelectCallback;
-  visible?: boolean;
   interactsWithVerticalSurfaces?: boolean;
   enabled?: boolean;
 }
@@ -37,11 +36,20 @@ export interface Props {
 export const PointerPreview: FunctionComponent<Props> = ({
   ultraGlobeMapRef,
   onSelect,
-  visible = true,
   interactsWithVerticalSurfaces = false,
   enabled: active = true,
 }) => {
   const gl = useThree((state) => state.gl);
+
+  const selectedItem = useGlobaleStore((state) => state.selectedItem);
+  const hoveredItem = useGlobaleStore((state) => state.hoveredItem);
+  const showPointer = useGlobaleStore((state) => state.showPointer);
+
+  const visible =
+    active &&
+    selectedItem === undefined &&
+    hoveredItem === undefined &&
+    showPointer;
 
   const pointerGroupRef = useRef<Group>(null!);
   /**
@@ -84,7 +92,12 @@ export const PointerPreview: FunctionComponent<Props> = ({
   }, [onSelect]);
 
   useFrame((state, _delta) => {
-    if (isPointerDown.current) return;
+    if (
+      isPointerDown.current ||
+      selectedItem !== undefined ||
+      hoveredItem !== undefined
+    )
+      return;
 
     const map = ultraGlobeMapRef.current;
     if (!map) return;
@@ -106,7 +119,11 @@ export const PointerPreview: FunctionComponent<Props> = ({
         map.selectController.selectCallback = (_mouseUpLocation: Vector2) => {
           // If we're hovering, don't select on the globe
           const store = useGlobaleStore.getState();
-          if (store.hoveredItem !== undefined) return;
+          if (
+            store.hoveredItem !== undefined ||
+            store.selectedItem !== undefined
+          )
+            return;
 
           const position = new Vector3().copy(group.position);
           const quaternion = new Quaternion().copy(group.quaternion);
@@ -162,3 +179,19 @@ export const PointerPreview: FunctionComponent<Props> = ({
 
   return <Pointer ref={pointerGroupRef} visible={visible} />;
 };
+
+// const zoomController = map.zoomController;
+// const intersection = new Vector3();
+// const dist = zoomController.distEllipsoid(
+//   raycaster.ray.origin,
+//   raycaster.ray.direction,
+//   map.planet.a,
+//   intersection
+// );
+
+// const firstIntersection = {
+//   point: intersection,
+//   object: null,
+//   face: null,
+// };
+// if (dist >= 0) {

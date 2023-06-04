@@ -1,11 +1,5 @@
 import { Canvas } from "@react-three/fiber";
-import {
-  FunctionComponent,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { FunctionComponent, useCallback, useRef } from "react";
 import { Color, type Quaternion, Vector3 } from "three";
 import { UltraGlobeMesh } from "./UltraGlobeMesh";
 // @ts-ignore
@@ -15,13 +9,10 @@ import { useGlobaleStore, type SceneItem } from "@/app/store";
 import { SceneItems } from "./SceneItems";
 import { v4 as uuid4 } from "uuid";
 import { Box } from "@react-three/drei";
-import { ref, set } from "firebase/database";
-import { firRealtimeDB } from "@/app/firebase";
 
 export const ThreeScene: FunctionComponent = () => {
   const ultraglobeMapRef = useRef<Map | null>(null);
 
-  const showPointer = useGlobaleStore((state) => state.showPointer);
   const sceneItems = useGlobaleStore((state) => state.sceneItems);
   const addSceneItem = useGlobaleStore((state) => state.addSceneItem);
   const pointerInteractsWithVerticalSurfaces = useGlobaleStore(
@@ -33,10 +24,6 @@ export const ThreeScene: FunctionComponent = () => {
 
   const addItemOnSelect = useCallback(
     (cartesianPosition: Vector3, quaternion: Quaternion) => {
-      // setShowAddItemMenu(true, {
-      //   pos: cartesianPosition.toArray(),
-      //   quat: quaternion.toArray() as [number, number, number, number],
-      // });
       const item: SceneItem = {
         id: uuid4(),
         positionAndRotation: {
@@ -44,15 +31,12 @@ export const ThreeScene: FunctionComponent = () => {
           quat: quaternion.toArray() as [number, number, number, number],
         },
         type: itemToAdd,
-        // color: "#00A3E1",
         color: "purple",
         scaleInvariant: true,
         creatorUserId: user?.id ?? "anonymous",
       };
 
       addSceneItem(item, true);
-
-      console.log("Opened addition menu");
     },
     [addSceneItem, itemToAdd, user?.id]
   );
@@ -91,7 +75,6 @@ export const ThreeScene: FunctionComponent = () => {
       <PointerPreview
         ultraGlobeMapRef={ultraglobeMapRef}
         onSelect={addItemOnSelect}
-        visible={showPointer}
         interactsWithVerticalSurfaces={pointerInteractsWithVerticalSurfaces}
         enabled={!showAddItemMenu}
       />

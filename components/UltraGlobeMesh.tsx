@@ -14,6 +14,9 @@ export const UltraGlobeMesh = forwardRef<Map>(({}, ref) => {
   const glRenderer = useThree((state) => state.gl);
 
   const googleTilesAPIKey = useGlobaleStore((state) => state.googleTilesAPIKey);
+  const interactingWithItemFromScene = useGlobaleStore(
+    (state) => state.interactingWithItemFromScene
+  );
 
   const ultraglobeMapRef = useRef<Map | null>(null);
 
@@ -43,7 +46,24 @@ export const UltraGlobeMesh = forwardRef<Map>(({}, ref) => {
     ultraglobeMapRef.current = map;
 
     console.log("Setup");
+
+    return () => {
+      ultraglobeMapRef.current = null;
+      map.dispose();
+      map = null;
+    }
   }, [camera, glRenderer, googleTilesAPIKey, ref, scene]);
+
+  useEffect(() => {
+    if (
+      !ultraglobeMapRef.current ||
+      ultraglobeMapRef.current?.controller === null
+    )
+      return;
+
+    ultraglobeMapRef.current.controller.active =
+      !interactingWithItemFromScene;
+  }, [interactingWithItemFromScene]);
 
   useFrame(() => {
     const ultraglobeMap = ultraglobeMapRef.current;
@@ -56,4 +76,3 @@ export const UltraGlobeMesh = forwardRef<Map>(({}, ref) => {
 });
 
 UltraGlobeMesh.displayName = "UltraGlobeMesh";
-// if (firstIntersection) {

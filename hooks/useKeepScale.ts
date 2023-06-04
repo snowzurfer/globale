@@ -1,5 +1,5 @@
 import { Vector3 as r3fVector3, useFrame } from "@react-three/fiber";
-import { type RefObject } from "react";
+import { useState, type RefObject } from "react";
 import { Vector3, type Object3D } from "three";
 
 export interface Args {
@@ -13,6 +13,9 @@ export const useKeepScale = ({
   active = true,
   originalScale = 1,
 }: Args) => {
+
+  const [worldPosition] = useState(() => new Vector3());
+
   useFrame(({ camera }) => {
     const object = objectRef.current;
     if (!object) return;
@@ -34,7 +37,8 @@ export const useKeepScale = ({
       return;
     }
 
-    const distance = object.position.distanceTo(camera.position);
+    object.getWorldPosition(worldPosition);
+    const distance = worldPosition.distanceTo(camera.position);
     object.scale.setScalar(distance / 1000);
   });
 };
