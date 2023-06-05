@@ -1,11 +1,7 @@
 import { FunctionComponent } from "react";
 // import firebase from 'firebase/app';
 // import 'firebase/auth';
-import {
-  ALL_SCENE_ITEM_TYPES,
-  SceneItemType,
-  useGlobaleStore,
-} from "@/app/store";
+import { ALL_SCENE_ITEMS, SceneItemType, useGlobaleStore } from "@/app/store";
 import { Modal } from "./Modal";
 import { clsxm } from "@/clsxm";
 
@@ -15,27 +11,23 @@ export const ItemsModal: FunctionComponent<{ onClose: () => void }> = ({
   const itemToAdd = useGlobaleStore((state) => state.itemToAdd);
   const setItemToAdd = useGlobaleStore((state) => state.setItemToAdd);
 
-  const handleTypeChange = (item: SceneItemType) => {
-    setItemToAdd(item);
-  };
-
   return (
     <Modal title="Items" onClose={onClose}>
       <div className="flex gap-2 overflow-auto">
-        {ALL_SCENE_ITEM_TYPES.map((type, idx) => (
+        {Object.entries(ALL_SCENE_ITEMS).map(([key, item]) => (
           <div
-            key={idx}
+            key={key}
             className={clsxm(
               "flex flex-col justify-end w-32 h-32 bg-gray-300 flex-shrink-0 rounded-md p-2 pointe-events-auto",
-              itemToAdd === type && "bg-blue-500"
+              itemToAdd === key && "bg-blue-500"
             )}
-            onClick={() => handleTypeChange(type)}
+            onClick={() => setItemToAdd(key)}
           >
             <label
-              htmlFor={`side-${type}`}
+              htmlFor={`side-${item.name}`}
               className="select-none font-medium text-gray-900 w-full"
             >
-              {type}
+              {item.name}
             </label>
           </div>
         ))}

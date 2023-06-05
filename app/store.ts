@@ -23,23 +23,84 @@ export interface User {
   isAnonymous: boolean;
 }
 
-export type SceneItemType =
-  | "sphere"
-  | "box"
-  | "model"
-  | "pointer"
-  | "label"
-  | "dragon"
-  | "tree";
-export const ALL_SCENE_ITEM_TYPES: SceneItemType[] = [
-  "sphere",
-  "box",
-  "model",
-  "pointer",
-  "label",
-  "dragon",
-  "tree",
-];
+export type SceneItemType = "sphere" | "box" | "model" | "pointer" | "label";
+
+export interface Item {
+  type: SceneItemType;
+  name: string;
+  /**
+   * Optional field for color
+   */
+  color?: string;
+  /**
+   * Optional field for model type
+   */
+  model?: string;
+
+  /**
+   * Optional field for labels
+   */
+  text?: string;
+
+  baseScale?: number;
+}
+
+export const ALL_SCENE_ITEMS: Record<string, Item> = {
+  sphere: {
+    type: "sphere",
+    name: "Sphere",
+    color: "#FF0000",
+    baseScale: 1,
+  },
+  box: {
+    type: "box",
+    name: "Box",
+    color: "#00FF00",
+    baseScale: 1,
+  },
+  pointer: {
+    type: "pointer",
+    name: "Pointer",
+    color: "#FF0000",
+    baseScale: 1,
+  },
+  label: {
+    type: "label",
+    name: "Label",
+    text: "Label",
+    baseScale: 1,
+  },
+  shrek: {
+    type: "model",
+    name: "Shrek",
+    model: "/shrek_hip_hop_dance.glb",
+    baseScale: 2,
+  },
+  "standing dragon": {
+    type: "model",
+    name: "Standing Dragon",
+    model: "/dragon_animation_standing.glb",
+    baseScale: 0.2,
+  },
+  "flying dragon": {
+    type: "model",
+    name: "Flying Dragon",
+    model: "/dragon_animation_flying.glb",
+    baseScale: 1,
+  },
+  clock: {
+    type: "model",
+    name: "Clock",
+    model: "/clock_low_poly.glb",
+    baseScale: 1,
+  },
+  "pine tree": {
+    type: "model",
+    name: "Pine Tree",
+    model: "/low_poly_pine_tree.glb",
+    baseScale: 1,
+  },
+};
 
 export interface PositionAndRotation {
   pos: [number, number, number];
@@ -49,15 +110,7 @@ export interface PositionAndRotation {
 export interface SceneItem {
   id: string;
   positionAndRotation: PositionAndRotation;
-  type: SceneItemType;
-  /**
-   * Optional field for color
-   */
-  color?: string;
-  /**
-   * Optional field for model type
-   */
-  model?: string;
+  item: Item;
   scaleInvariant: boolean;
   creatorUserId: string;
 }
@@ -111,8 +164,8 @@ export interface GlobaleStore {
     showAddItemMenu: boolean,
     pointerPosition: PositionAndRotation
   ) => void;
-  itemToAdd: SceneItemType;
-  setItemToAdd: (itemToAdd: SceneItemType) => void;
+  itemToAdd: string;
+  setItemToAdd: (itemToAdd: string) => void;
   hoveredItem?: SceneItemAndIndex;
   setHoveredItem: (itemId?: SceneItem["id"]) => void;
   selectedItem?: SceneItemAndIndex;

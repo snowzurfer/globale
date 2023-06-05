@@ -138,10 +138,26 @@ export const PointerPreview: FunctionComponent<Props> = ({
     const pointer = state.pointer;
     const camera = state.camera;
     raycaster.setFromCamera(pointer, camera);
+    // const zoomController = map.zoomController;
+    // const intersection = new Vector3();
+    // const dist = zoomController.distEllipsoid(
+    //   raycaster.ray.origin,
+    //   raycaster.ray.direction,
+    //   map.planet.a,
+    //   intersection
+    // );
+
+    // const firstIntersection = {
+    //   point: intersection,
+    //   object: null,
+    //   face: null,
+    // };
+    // if (dist >= 0) {
 
     // Via the if statement above, we're ensured to have a ceObject by here
     const intersects = raycaster.intersectObject(ceObjectRef.current!);
     const firstIntersection = intersects[0];
+    // if (dist >= 0) {
     if (firstIntersection) {
       targetGroupPosition.copy(firstIntersection.point);
 

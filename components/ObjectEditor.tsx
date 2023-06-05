@@ -1,4 +1,9 @@
-import { useGlobaleStore, type SceneItemAndIndex } from "@/app/store";
+import {
+  useGlobaleStore,
+  type SceneItemAndIndex,
+  convertCartesianToGeo,
+  convertGeoToCartesian,
+} from "@/app/store";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { type FunctionComponent } from "react";
 import { SwitchWithlabel } from "./SwitchWithLabel";
@@ -17,6 +22,11 @@ export const ObjectEditorPanel: FunctionComponent<Props> = ({
   const updateSceneItem = useGlobaleStore((state) => state.updateSceneItem);
   const sceneItems = useGlobaleStore((state) => state.sceneItems);
   const deleteItem = useGlobaleStore((state) => state.deleteItem);
+
+  // Convert the positions to long , lat, alt
+  const [lng, lat, alt] = convertCartesianToGeo(
+    sceneItems[sceneItem.index].positionAndRotation.pos
+  );
 
   return (
     <div className="w-64 bg-white shadow-lg rounded-md flex flex-col p-4 gap-2">
@@ -47,29 +57,34 @@ export const ObjectEditorPanel: FunctionComponent<Props> = ({
           );
         }}
       />
-      <div className="flex flex-row items-center justify-between w-full">
-        <span className="text-xs text-gray-500">Color</span>
-        <input
-          type="color"
-          className="w-8 h-8 rounded-md"
-          value={sceneItems[sceneItem.index].color}
-          onChange={(e) => {
-            updateSceneItem(
-              {
-                ...sceneItems[sceneItem.index],
-                color: e.target.value,
-              },
-              sceneItem.index
-            );
-          }}
-        />
-      </div>
-      <div className="flex flex-row items-center justify-between w-full gap-1">
-        <span className="text-xs text-gray-500">Pos</span>
+      {sceneItems[sceneItem.index].item.color && (
+        <div className="flex flex-row items-center justify-between w-full">
+          <span className="text-xs text-gray-500">Color</span>
+          <input
+            type="color"
+            className="w-8 h-8 rounded-md"
+            value={sceneItems[sceneItem.index].item.color}
+            onChange={(e) => {
+              updateSceneItem(
+                {
+                  ...sceneItems[sceneItem.index],
+                  item: {
+                    ...sceneItems[sceneItem.index].item,
+                    color: e.target.value,
+                  },
+                },
+                sceneItem.index
+              );
+            }}
+          />
+        </div>
+      )}
+      <div className="flex flex-col items-center justify-between w-full gap-1">
+        <span className="text-xs text-gray-500 w-full text-left">Pos</span>
         <input
           type="number"
-          className="w-full h-8 rounded-md text-xs"
-          value={sceneItems[sceneItem.index].positionAndRotation.pos[0]}
+          className="w-full h-8 rounded-md text-xs text-gray-400"
+          value={lat}
           onChange={(e) => {
             updateSceneItem(
               {
@@ -89,8 +104,8 @@ export const ObjectEditorPanel: FunctionComponent<Props> = ({
         />
         <input
           type="number"
-          className="w-full h-8 rounded-md text-xs"
-          value={sceneItems[sceneItem.index].positionAndRotation.pos[1]}
+          className="w-full h-8 rounded-md text-xs text-gray-400"
+          value={lng}
           onChange={(e) => {
             updateSceneItem(
               {
@@ -110,19 +125,22 @@ export const ObjectEditorPanel: FunctionComponent<Props> = ({
         />
         <input
           type="number"
-          className="w-full h-8 rounded-md text-xs"
-          value={sceneItems[sceneItem.index].positionAndRotation.pos[2]}
+          className="w-full h-8 rounded-md text-xs text-gray-400"
+          value={alt}
           onChange={(e) => {
+            // Convert back to cartesian
+            const [x, y, z] = convertGeoToCartesian([
+              lat,
+              lng,
+              parseFloat(e.target.value),
+            ]);
+
             updateSceneItem(
               {
                 ...sceneItems[sceneItem.index],
                 positionAndRotation: {
                   ...sceneItems[sceneItem.index].positionAndRotation,
-                  pos: [
-                    sceneItems[sceneItem.index].positionAndRotation.pos[0],
-                    sceneItems[sceneItem.index].positionAndRotation.pos[1],
-                    parseInt(e.target.value),
-                  ],
+                  pos: [x, y, z],
                 },
               },
               sceneItem.index
@@ -130,6 +148,31 @@ export const ObjectEditorPanel: FunctionComponent<Props> = ({
           }}
         />
       </div>
+      {sceneItems[sceneItem.index].item.text !== undefined && (
+        <div className="flex flex-col ">
+          <input
+            type="text"
+            name="text"
+            id="text"
+            className="block w-full rounded-md border-0 p-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+            placeholder="Label"
+            aria-describedby="label"
+            value={sceneItems[sceneItem.index].item.text}
+            onChange={(e) => {
+              updateSceneItem(
+                {
+                  ...sceneItems[sceneItem.index],
+                  item: {
+                    ...sceneItems[sceneItem.index].item,
+                    text: e.target.value,
+                  },
+                },
+                sceneItem.index
+              );
+            }}
+          />
+        </div>
+      )}
       <div className="flex flex-row items-center justify-between w-full gap-1">
         <button
           className="w-full h-8 rounded-md text-xs bg-red-500 text-white"

@@ -17,6 +17,8 @@ import { Pointer } from "./Pointer";
 import { RotatingBox } from "./RotatingBox";
 import { PivotControls } from "@react-three/drei";
 import { throttle } from "lodash";
+import { AnimatedModel } from "./AnimatedModel";
+import { Label } from "./Label";
 
 export interface Props {
   items: SceneItem[];
@@ -51,22 +53,46 @@ export const SceneItemElement: FunctionComponent<SceneItemElementProps> = ({
   });
 
   const handleOnClick = () => {
+    console.log("Clicked");
     // If the user doesn't own this item, don't do anything.
     if (item.creatorUserId !== user?.id) return;
 
     setSelectedItem(item.id);
   };
 
-  const handleOnPointerEnter = () => setHoveredItem(item.id);
+  const handleOnPointerEnter = () => {
+    console.log("Hovering");
+    setHoveredItem(item.id);
+  };
   const handleOnPointerLeave = () => setHoveredItem(undefined);
 
   let itemComponent;
-  switch (item.type) {
-    case "pointer":
-      itemComponent = <Pointer topColor={item.color} />;
+  switch (item.item.name) {
+    case "Pointer":
+      itemComponent = <Pointer topColor={item.item.color} />;
       break;
-    case "box":
-      itemComponent = <RotatingBox position={[0, 40, 0]} color={item.color} />;
+    case "Box":
+      itemComponent = (
+        <RotatingBox position={[0, 40, 0]} color={item.item.color} />
+      );
+      break;
+    case "Shrek":
+      itemComponent = (
+        <AnimatedModel path={item.item.model!} scale={item.item.baseScale} />
+      );
+      break;
+    case "Standing Dragon":
+      itemComponent = <AnimatedModel path={item.item.model!} scale={30} />;
+      break;
+    case "Label":
+      itemComponent = (
+        <Label
+          text={item.item.text!}
+          onClick={handleOnClick}
+          onPointerEnter={handleOnPointerEnter}
+          onPointerLeave={handleOnPointerLeave}
+        />
+      );
       break;
     default:
       itemComponent = null;
@@ -132,6 +158,7 @@ export const SceneItemElement: FunctionComponent<SceneItemElementProps> = ({
       onDragStart={() => setInteractingWithItemFromScene(true)}
       onDrag={(_l, _deltaL, w, _deltaW) => handleOnDrag(w, item, index)}
       onDragEnd={() => setInteractingWithItemFromScene(false)}
+      depthTest={false}
     >
       <group
         ref={groupRef}
