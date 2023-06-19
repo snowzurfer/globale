@@ -7,15 +7,16 @@ import { useKeepScale } from "@/hooks/useKeepScale";
 import { type GroupProps } from "@react-three/fiber";
 import {
   FunctionComponent,
+  Suspense,
   useCallback,
   useMemo,
   useRef,
   useState,
 } from "react";
-import { Matrix4, type Group, Quaternion, Vector3 } from "three";
+import { Matrix4, type Group, Quaternion, Vector3, Euler } from "three";
 import { Pointer } from "./Pointer";
 import { RotatingBox } from "./RotatingBox";
-import { PivotControls } from "@react-three/drei";
+import { Gltf, PivotControls } from "@react-three/drei";
 import { throttle } from "lodash";
 import { AnimatedModel } from "./AnimatedModel";
 import { Label } from "./Label";
@@ -30,7 +31,7 @@ export interface SceneItemElementProps extends GroupProps {
 }
 
 export const SceneItemElement: FunctionComponent<SceneItemElementProps> = ({
-  item,
+  item: sceneItem,
   scale,
   index,
   ...props
@@ -48,46 +49,50 @@ export const SceneItemElement: FunctionComponent<SceneItemElementProps> = ({
 
   useKeepScale({
     objectRef: groupRef,
-    active: item.scaleInvariant,
+    active: sceneItem.scaleInvariant,
     originalScale: scale,
   });
 
   const handleOnClick = () => {
     console.log("Clicked");
     // If the user doesn't own this item, don't do anything.
-    if (item.creatorUserId !== user?.id) return;
+    if (sceneItem.creatorUserId !== user?.id) return;
 
-    setSelectedItem(item.id);
+    setSelectedItem(sceneItem.id);
   };
 
   const handleOnPointerEnter = () => {
     console.log("Hovering");
-    setHoveredItem(item.id);
+    setHoveredItem(sceneItem.id);
   };
   const handleOnPointerLeave = () => setHoveredItem(undefined);
 
   let itemComponent;
-  switch (item.item.name) {
+  switch (sceneItem.item.name) {
     case "Pointer":
-      itemComponent = <Pointer topColor={item.item.color} />;
+      itemComponent = <Pointer topColor={sceneItem.item.color} />;
       break;
     case "Box":
       itemComponent = (
-        <RotatingBox position={[0, 40, 0]} color={item.item.color} />
+        <RotatingBox position={[0, 40, 0]} color={sceneItem.item.color} />
       );
       break;
-    case "Shrek":
+    case "Ferrari Dino":
       itemComponent = (
-        <AnimatedModel path={item.item.model!} scale={item.item.baseScale} />
+        <Suspense fallback={null}>
+          <Gltf src="/ferrari_dino_246/scene.gltf" />
+        </Suspense>
       );
+    case "Shrek":
+      itemComponent = <AnimatedModel path={sceneItem.item.model!} />;
       break;
     case "Standing Dragon":
-      itemComponent = <AnimatedModel path={item.item.model!} scale={30} />;
+      itemComponent = <AnimatedModel path={sceneItem.item.model!} scale={30} />;
       break;
     case "Label":
       itemComponent = (
         <Label
-          text={item.item.text!}
+          text={sceneItem.item.text!}
           onClick={handleOnClick}
           onPointerEnter={handleOnPointerEnter}
           onPointerLeave={handleOnPointerLeave}
@@ -105,16 +110,16 @@ export const SceneItemElement: FunctionComponent<SceneItemElementProps> = ({
   const matrix = useMemo(() => {
     return cachedMatrix
       .makeTranslation(
-        item.positionAndRotation.pos[0],
-        item.positionAndRotation.pos[1],
-        item.positionAndRotation.pos[2]
+        sceneItem.positionAndRotation.pos[0],
+        sceneItem.positionAndRotation.pos[1],
+        sceneItem.positionAndRotation.pos[2]
       )
       .multiply(
         cachedRotationMatrix.makeRotationFromQuaternion(
-          cachedQuaternion.fromArray(item.positionAndRotation.quat)
+          cachedQuaternion.fromArray(sceneItem.positionAndRotation.quat)
         )
       );
-  }, [item.positionAndRotation.pos, item.positionAndRotation.quat]);
+  }, [sceneItem.positionAndRotation.pos, sceneItem.positionAndRotation.quat]);
 
   const throttledHandleDrag = useMemo(
     () =>
@@ -144,7 +149,7 @@ export const SceneItemElement: FunctionComponent<SceneItemElementProps> = ({
     [throttledHandleDrag]
   );
 
-  const pivotActive = item.id === selectedItem?.itemId;
+  const pivotActive = sceneItem.id === selectedItem?.itemId;
 
   return (
     <PivotControls
@@ -156,7 +161,9 @@ export const SceneItemElement: FunctionComponent<SceneItemElementProps> = ({
       disableSliders={!pivotActive}
       disableAxes={!pivotActive}
       onDragStart={() => setInteractingWithItemFromScene(true)}
-      onDrag={(_l, _deltaL, w, _deltaW) => handleOnDrag(w, item, index)}
+      onDrag={(_l, _deltaL, w, _deltaW) => {
+        handleOnDrag(w, sceneItem, index);
+      }}
       onDragEnd={() => setInteractingWithItemFromScene(false)}
       depthTest={false}
     >
@@ -167,7 +174,15 @@ export const SceneItemElement: FunctionComponent<SceneItemElementProps> = ({
         onPointerLeave={handleOnPointerLeave}
         onClick={handleOnClick}
       >
-        {itemComponent}
+        <group
+          scale={
+            sceneItem.scaleInvariant
+              ? sceneItem.item.scaleInvariantBaseScale
+              : sceneItem.item.baseScale
+          }
+        >
+          {itemComponent}
+        </group>
       </group>
     </PivotControls>
   );

@@ -21,6 +21,8 @@ import { useGlobaleStore } from "@/app/store";
 
 const upVector = new Vector3(0, 1, 0);
 
+export const SCALE_INVARIANT_SCALE = 8.5;
+
 export type OnSelectCallback = (
   position: Vector3,
   quaternion: Quaternion
@@ -193,7 +195,11 @@ export const PointerPreview: FunctionComponent<Props> = ({
     group.scale.setScalar(distance / 1000);
   });
 
-  return <Pointer ref={pointerGroupRef} visible={visible} />;
+  return (
+    <group ref={pointerGroupRef}>
+      <Pointer visible={visible} scale={SCALE_INVARIANT_SCALE} />;
+    </group>
+  );
 };
 
 // const zoomController = map.zoomController;

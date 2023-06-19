@@ -14,7 +14,7 @@ import {
   set,
   update,
 } from "firebase/database";
-import { use } from "react";
+import { SCALE_INVARIANT_SCALE as POINTER_SCALE_INVARIANT_SCALE } from "@/components/PointerPreview";
 
 export interface User {
   id: string;
@@ -37,12 +37,17 @@ export interface Item {
    */
   model?: string;
 
+  usdzModel?: string;
+  usdzModelScale?: number;
+
   /**
    * Optional field for labels
    */
   text?: string;
 
-  baseScale?: number;
+  baseScale: number;
+
+  scaleInvariantBaseScale: number;
 }
 
 export const ALL_SCENE_ITEMS: Record<string, Item> = {
@@ -51,54 +56,39 @@ export const ALL_SCENE_ITEMS: Record<string, Item> = {
     name: "Sphere",
     color: "#FF0000",
     baseScale: 1,
+    scaleInvariantBaseScale: 1,
   },
   box: {
     type: "box",
     name: "Box",
     color: "#00FF00",
     baseScale: 1,
+    scaleInvariantBaseScale: 1,
   },
   pointer: {
     type: "pointer",
     name: "Pointer",
     color: "#FF0000",
     baseScale: 1,
+    scaleInvariantBaseScale: POINTER_SCALE_INVARIANT_SCALE,
   },
   label: {
     type: "label",
     name: "Label",
     text: "Label",
     baseScale: 1,
+    scaleInvariantBaseScale: 1,
   },
-  shrek: {
+  dino: {
     type: "model",
-    name: "Shrek",
-    model: "/shrek_hip_hop_dance.glb",
-    baseScale: 2,
-  },
-  "standing dragon": {
-    type: "model",
-    name: "Standing Dragon",
-    model: "/dragon_animation_standing.glb",
-    baseScale: 0.2,
-  },
-  "flying dragon": {
-    type: "model",
-    name: "Flying Dragon",
-    model: "/dragon_animation_flying.glb",
-    baseScale: 1,
-  },
-  clock: {
-    type: "model",
-    name: "Clock",
-    model: "/clock_low_poly.glb",
-    baseScale: 1,
-  },
-  "pine tree": {
-    type: "model",
-    name: "Pine Tree",
-    model: "/low_poly_pine_tree.glb",
-    baseScale: 1,
+    name: "Ferrari Dino",
+    model:
+      "https://firebasestorage.googleapis.com/v0/b/largascala.appspot.com/o/ferrari_dino_246.glb?alt=media&token=27283198-187b-40e4-b5e9-99e1e4cb7624",
+    usdzModel:
+      "https://firebasestorage.googleapis.com/v0/b/largascala.appspot.com/o/ferrari_dino_246.usdz?alt=media&token=96371737-f326-49e6-8947-97b36a688a71",
+    usdzModelScale: 0.004,
+    baseScale: 0.0155,
+    scaleInvariantBaseScale: 0.1,
   },
 };
 
@@ -479,6 +469,7 @@ onChildAdded(sceneItemsRef, (snapshot) => {
     },
   };
 
+  console.log("Added mapped item: ", mapped);
   useGlobaleStore.getState().addSceneItem(mapped, false);
 });
 
@@ -492,8 +483,13 @@ onChildChanged(sceneItemsRef, (snapshot) => {
     },
   };
 
-  // If the item is in the ids to scene items map, don't update it
-  if (useGlobaleStore.getState().idsToSceneItems.has(mapped.id)) return;
+  // If the item is in the ids to scene items map, don't update it, but make
+  // an exception  for the labels
+  if (
+    useGlobaleStore.getState().idsToSceneItems.has(mapped.id) &&
+    mapped.item.type !== "label"
+  )
+    return;
 
   useGlobaleStore.setState((state) => {
     return {

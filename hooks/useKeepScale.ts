@@ -13,7 +13,6 @@ export const useKeepScale = ({
   active = true,
   originalScale = 1,
 }: Args) => {
-
   const [worldPosition] = useState(() => new Vector3());
 
   useFrame(({ camera }) => {
@@ -32,7 +31,6 @@ export const useKeepScale = ({
         } else {
           object.scale.set(...originalScale);
         }
-
       }
       return;
     }

@@ -1,5 +1,11 @@
 import { Canvas } from "@react-three/fiber";
-import { FunctionComponent, useCallback, useEffect, useRef } from "react";
+import {
+  FunctionComponent,
+  Suspense,
+  useCallback,
+  useEffect,
+  useRef,
+} from "react";
 import { Color, type Quaternion, Vector3, Group } from "three";
 import { UltraGlobeMesh } from "./UltraGlobeMesh";
 // @ts-ignore
@@ -87,6 +93,14 @@ export const ThreeScene: FunctionComponent = () => {
       {/* <Box args={[400000, 400000, 400000]} position={[7398100, 0, 0]}>
         <meshBasicMaterial color="red" />
       </Box> */}
+      {/* <Suspense fallback={null}>
+        <Gltf
+          src="/ferrari_dino_246/scene.gltf"
+                     1416161
+          position={[7398100, 0, 0]}
+          scale={[10000, 10000, 10000]}
+        />
+      </Suspense> */}
       <Box args={[400000, 400000, 400000]} position={[0, 7398100, 0]}>
         <meshBasicMaterial color="green" />
       </Box>

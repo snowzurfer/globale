@@ -79,74 +79,83 @@ export const ObjectEditorPanel: FunctionComponent<Props> = ({
           />
         </div>
       )}
-      <div className="flex flex-col items-center justify-between w-full gap-1">
-        <span className="text-xs text-gray-500 w-full text-left">Pos</span>
-        <input
-          type="number"
-          className="w-full h-8 rounded-md text-xs text-gray-400"
-          value={lat}
-          onChange={(e) => {
-            updateSceneItem(
-              {
-                ...sceneItems[sceneItem.index],
-                positionAndRotation: {
-                  ...sceneItems[sceneItem.index].positionAndRotation,
-                  pos: [
-                    parseInt(e.target.value),
-                    sceneItems[sceneItem.index].positionAndRotation.pos[1],
-                    sceneItems[sceneItem.index].positionAndRotation.pos[2],
-                  ],
+      <div className="flex flex-col items-center justify-between w-full gap-px">
+        <span className="text-xs text-gray-500 w-full text-left">Position</span>
+        <div className="flex w-full items-center justify-items-center gap-x-3 ml-4">
+          <span className="text-xs text-gray-500">Lat:</span>
+          <input
+            type="number"
+            className="w-full h-8 rounded-md text-xs text-gray-400 grow"
+            value={lat}
+            onChange={(e) => {
+              updateSceneItem(
+                {
+                  ...sceneItems[sceneItem.index],
+                  positionAndRotation: {
+                    ...sceneItems[sceneItem.index].positionAndRotation,
+                    pos: [
+                      parseInt(e.target.value),
+                      sceneItems[sceneItem.index].positionAndRotation.pos[1],
+                      sceneItems[sceneItem.index].positionAndRotation.pos[2],
+                    ],
+                  },
                 },
-              },
-              sceneItem.index
-            );
-          }}
-        />
-        <input
-          type="number"
-          className="w-full h-8 rounded-md text-xs text-gray-400"
-          value={lng}
-          onChange={(e) => {
-            updateSceneItem(
-              {
-                ...sceneItems[sceneItem.index],
-                positionAndRotation: {
-                  ...sceneItems[sceneItem.index].positionAndRotation,
-                  pos: [
-                    sceneItems[sceneItem.index].positionAndRotation.pos[0],
-                    parseInt(e.target.value),
-                    sceneItems[sceneItem.index].positionAndRotation.pos[2],
-                  ],
+                sceneItem.index
+              );
+            }}
+          />
+        </div>
+        <div className="flex w-full items-center justify-items-center gap-x-3 ml-4">
+          <span className="text-xs text-gray-500">Lon:</span>
+          <input
+            type="number"
+            className="w-full h-8 rounded-md text-xs text-gray-400"
+            value={lng}
+            onChange={(e) => {
+              updateSceneItem(
+                {
+                  ...sceneItems[sceneItem.index],
+                  positionAndRotation: {
+                    ...sceneItems[sceneItem.index].positionAndRotation,
+                    pos: [
+                      sceneItems[sceneItem.index].positionAndRotation.pos[0],
+                      parseInt(e.target.value),
+                      sceneItems[sceneItem.index].positionAndRotation.pos[2],
+                    ],
+                  },
                 },
-              },
-              sceneItem.index
-            );
-          }}
-        />
-        <input
-          type="number"
-          className="w-full h-8 rounded-md text-xs text-gray-400"
-          value={alt}
-          onChange={(e) => {
-            // Convert back to cartesian
-            const [x, y, z] = convertGeoToCartesian([
-              lat,
-              lng,
-              parseFloat(e.target.value),
-            ]);
+                sceneItem.index
+              );
+            }}
+          />
+        </div>
+        <div className="flex w-full items-center justify-items-center gap-x-3 ml-4">
+          <span className="text-xs text-gray-500">Alt:</span>
+          <input
+            type="number"
+            className="w-full h-8 rounded-md text-xs text-gray-400"
+            value={alt}
+            onChange={(e) => {
+              // Convert back to cartesian
+              const [x, y, z] = convertGeoToCartesian([
+                lat,
+                lng,
+                parseFloat(e.target.value),
+              ]);
 
-            updateSceneItem(
-              {
-                ...sceneItems[sceneItem.index],
-                positionAndRotation: {
-                  ...sceneItems[sceneItem.index].positionAndRotation,
-                  pos: [x, y, z],
+              updateSceneItem(
+                {
+                  ...sceneItems[sceneItem.index],
+                  positionAndRotation: {
+                    ...sceneItems[sceneItem.index].positionAndRotation,
+                    pos: [x, y, z],
+                  },
                 },
-              },
-              sceneItem.index
-            );
-          }}
-        />
+                sceneItem.index
+              );
+            }}
+          />
+        </div>
       </div>
       {sceneItems[sceneItem.index].item.text !== undefined && (
         <div className="flex flex-col ">

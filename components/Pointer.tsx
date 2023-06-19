@@ -28,7 +28,7 @@ export const Pointer = forwardRef<Group, Props>(
     return (
       <group ref={ref} {...props}>
         <mesh raycast={raycast}>
-          <meshLineGeometry points={[0, 0, 0, 0, 40, 0]} />
+          <meshLineGeometry points={[0, 0, 0, 0, 2, 0]} />
           <meshLineMaterial
             lineWidth={8}
             color="white"
@@ -39,7 +39,7 @@ export const Pointer = forwardRef<Group, Props>(
             dashRatio={0.5}
           />
         </mesh>
-        <Sphere args={[5]} position={[0, 40, 0]}>
+        <Sphere args={[0.4]} position={[0, 2, 0]}>
           <meshLambertMaterial color={topColor} />
         </Sphere>
       </group>
