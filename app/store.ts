@@ -18,6 +18,7 @@ import {
   set,
   update,
 } from "firebase/database";
+import { set as lodashSet } from "lodash";
 import { SCALE_INVARIANT_SCALE as POINTER_SCALE_INVARIANT_SCALE } from "@/components/PointerPreview";
 
 export interface User {
@@ -109,6 +110,7 @@ export interface SceneItem {
   item: Item;
   scaleInvariant: boolean;
   creatorUserId: string;
+  inUseByUserId?: string;
 }
 
 export interface SceneItemAndIndex {
@@ -306,8 +308,22 @@ export const useGlobaleStore = create<GlobaleStore>()((set, get) => ({
   selectedItem: undefined,
   setSelectedItem: (itemId) => {
     if (itemId) {
+      // There should always be a user at this point
+      const user = get().user;
+      if (!user) return;
+
+      // First find the item
       const index = get().sceneItems.findIndex((item) => item.id === itemId);
-      if (index !== -1) {
+      if (index === -1) return;
+
+      const item = get().sceneItems[index];
+
+      // If the user doesn't own this item, or isn't authorized to use it,
+      // don't do anything.
+      if (
+        item.creatorUserId === user.id ||
+        user.authorizedByUsers[item.creatorUserId] === true
+      ) {
         set({ selectedItem: { itemId, index } });
       }
     } else {
@@ -418,7 +434,9 @@ onAuthStateChanged(firAuth, async (firUser) => {
       // also been required to provide an API key before continuing, and the store will have
       // been updated with the API key before this point.
       googleTilesAPIKey: useGlobaleStore.getState().googleTilesAPIKey ?? "",
-      authorizedByUsers: {},
+      authorizedByUsers: {
+        none: true,
+      },
     };
 
     let googleTilesAPIKey: string | undefined = undefined;
@@ -430,7 +448,8 @@ onAuthStateChanged(firAuth, async (firUser) => {
     if (!userSnapshot.exists()) {
       await set(userRef, user);
     } else {
-      user = userSnapshot.val();
+      const val = userSnapshot.val();
+      user = val;
       googleTilesAPIKey = user.googleTilesAPIKey;
       useGlobaleStore.setState({
         googleTilesAPIKey,
@@ -439,14 +458,17 @@ onAuthStateChanged(firAuth, async (firUser) => {
 
     // Listen for updates to the user
     const unsub = onChildChanged(userRef, (snapshot) => {
-      const updatedUser = snapshot.val();
-      console.log("Updated user", updatedUser);
+      const key = snapshot.key;
+      if (!key) return;
+
       const currentUser = useGlobaleStore.getState().user;
+      if (!currentUser) return;
+
+      const updatedUser = snapshot.val();
+      const newUser = lodashSet({ ...currentUser }, key, updatedUser);
+
       useGlobaleStore.setState({
-        user: {
-          ...currentUser,
-          ...updatedUser,
-        },
+        user: newUser,
       });
     });
 
@@ -576,3 +598,31 @@ export const initLocalStorage = () => {
   const hasClickedOnce = window.localStorage.getItem(HAS_CLICKED_ONCE_KEY);
   useGlobaleStore.setState({ hasClickedOnce: !!hasClickedOnce });
 };
+
+// // If the item is already in use, don't select it
+// const item = get().idsToSceneItems.get(itemId);
+// if (!item || item?.inUseByUserId !== undefined) return;
+
+// const index = get().sceneItems.findIndex((item) => item.id === itemId);
+// if (index !== -1) {
+//   // Update the DB, marking the item as in use
+//   const user = get().user;
+//   const newItem = {
+//     ...item,
+//     inUseByUserId: user!.id,
+//   };
+//   set((state) => {
+//     const newSceneItems = [...state.sceneItems];
+//     newSceneItems[index] = item;
+
+//     let newStateDiff = {
+//       sceneItems: newSceneItems,
+//       idsToSceneItems: new Map(state.idsToSceneItems),
+//     };
+
+//     return newStateDiff;
+//   });
+
+//   get().updateSceneItem(newItem, index);
+//   await updateItemInFirebase(newItem);
+//   set({ selectedItem: { itemId, index }  });

@@ -7,6 +7,7 @@ import {
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { type FunctionComponent } from "react";
 import { SwitchWithlabel } from "./SwitchWithLabel";
+import clsx from "clsx";
 
 export interface Props {
   sceneItem: SceneItemAndIndex;
@@ -19,6 +20,7 @@ export const ObjectEditorPanel: FunctionComponent<Props> = ({
   sceneItem,
   onClose,
 }) => {
+  const user = useGlobaleStore((state) => state.user);
   const updateSceneItem = useGlobaleStore((state) => state.updateSceneItem);
   const sceneItems = useGlobaleStore((state) => state.sceneItems);
   const deleteItem = useGlobaleStore((state) => state.deleteItem);
@@ -42,6 +44,14 @@ export const ObjectEditorPanel: FunctionComponent<Props> = ({
           <span className="sr-only">Close</span>
           <XMarkIcon className="h-6 w-6" aria-hidden="true" />
         </button>
+      </div>
+      <div className="flex mb-2">
+        <span className="text-xs text-gray-700">
+          By:{" "}
+          {sceneItems[sceneItem.index].creatorUserId === user?.id
+            ? "you"
+            : sceneItems[sceneItem.index].creatorUserId}
+        </span>
       </div>
       <SwitchWithlabel
         label="Scale Invariant"
@@ -184,11 +194,16 @@ export const ObjectEditorPanel: FunctionComponent<Props> = ({
       )}
       <div className="flex flex-row items-center justify-between w-full gap-1">
         <button
-          className="w-full h-8 rounded-md text-xs bg-red-500 text-white"
+          className={clsx(
+            "w-full h-8 rounded-md text-xs bg-red-500 text-white",
+            user?.id !== sceneItems[sceneItem.index].creatorUserId &&
+              "opacity-50 cursor-not-allowed"
+          )}
           onClick={async () => {
             await deleteItem(sceneItem.itemId, true);
             onClose();
           }}
+          disabled={user?.id !== sceneItems[sceneItem.index].creatorUserId}
         >
           Delete
         </button>

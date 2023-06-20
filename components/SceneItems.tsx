@@ -54,10 +54,6 @@ export const SceneItemElement: FunctionComponent<SceneItemElementProps> = ({
   });
 
   const handleOnClick = () => {
-    console.log("Clicked");
-    // If the user doesn't own this item, don't do anything.
-    if (sceneItem.creatorUserId !== user?.id) return;
-
     setSelectedItem(sceneItem.id);
   };
 
