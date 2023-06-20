@@ -1,10 +1,12 @@
 import { FunctionComponent, PropsWithChildren } from "react";
-// import firebase from 'firebase/app';
-// import 'firebase/auth';
 import { firAuth } from "@/app/firebase";
-import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import {
+  GoogleAuthProvider,
+  linkWithPopup,
+  signInWithPopup,
+} from "firebase/auth";
 import { SwitchWithlabel } from "./SwitchWithLabel";
-import { useGlobaleStore } from "@/app/store";
+import { useGlobaleStore, deleteUser } from "@/app/store";
 import { Modal } from "./Modal";
 import { clsxm } from "@/clsxm";
 
@@ -50,13 +52,27 @@ export const SettingsModal: FunctionComponent<{ onClose: () => void }> = ({
   const setClickToAdd = useGlobaleStore((state) => state.setClickToAdd);
 
   const user = useGlobaleStore((state) => state.user);
+  const deleteItem = useGlobaleStore((state) => state.deleteItem);
+  const promoteAnonymousUser = useGlobaleStore(
+    (state) => state.promoteAnonymousUser
+  );
 
   const handleSignIn = async () => {
     const provider = new GoogleAuthProvider();
 
     try {
-      const result = await signInWithPopup(firAuth, provider);
-      console.log("Login result: ", result);
+      // If the user was anonymous, copy their data to the new account
+      if (user && user.isAnonymous) {
+        const firUser = firAuth.currentUser;
+        if (!firUser) throw new Error("No firebase user");
+
+        const result = await linkWithPopup(firUser, provider);
+        promoteAnonymousUser(result.user);
+        console.log("Account linking result: ", result);
+      } else {
+        const result = await signInWithPopup(firAuth, provider);
+        console.log("Login result: ", result);
+      }
     } catch (error) {
       console.log("Login error: ", error);
       return;
@@ -65,6 +81,21 @@ export const SettingsModal: FunctionComponent<{ onClose: () => void }> = ({
 
   const handleSignOut = async () => {
     try {
+      // If the user was anonymous, delete their data from firebase
+      if (user && user.isAnonymous) {
+        // Loop through all items that have the user as the owner and delete them
+        // Make a copy of the items array because we will be modifying it
+        const items = [...useGlobaleStore.getState().sceneItems];
+        for (const item of items) {
+          if (item.creatorUserId === user.id) {
+            console.log("Trying to delete item: ", item);
+            await deleteItem(item.id, true);
+          }
+        }
+
+        await deleteUser(user.id);
+      }
+
       await firAuth.signOut();
     } catch (error) {
       console.log("Logout error: ", error);
@@ -101,7 +132,7 @@ export const SettingsModal: FunctionComponent<{ onClose: () => void }> = ({
               <p>Username: {user.username}</p>
               {/* <p className="text-xs text-gray-400">{user.email}</p> */}
               {user.isAnonymous && <p>(Signed in Anonymously)</p>}
-              {/* {user.isAnonymous && (
+              {user.isAnonymous && (
                 <div className="flex flex-col items-start w-full">
                   <button
                     className="w-full px-4 py-2 text-sm font-medium text-white bg-blue-500 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
@@ -110,12 +141,12 @@ export const SettingsModal: FunctionComponent<{ onClose: () => void }> = ({
                     Log in with Google
                   </button>
                 </div>
-              )} */}
+              )}
               <button
                 className="w-full px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                 onClick={handleSignOut}
               >
-                Log out
+                {user.isAnonymous ? "Log out and delete account" : "Log out"}
               </button>
             </div>
           )}

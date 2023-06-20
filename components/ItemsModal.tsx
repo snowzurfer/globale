@@ -1,6 +1,4 @@
 import { FunctionComponent } from "react";
-// import firebase from 'firebase/app';
-// import 'firebase/auth';
 import { ALL_SCENE_ITEMS, SceneItemType, useGlobaleStore } from "@/app/store";
 import { Modal } from "./Modal";
 import { clsxm } from "@/clsxm";
@@ -18,7 +16,7 @@ export const ItemsModal: FunctionComponent<{ onClose: () => void }> = ({
           <div
             key={key}
             className={clsxm(
-              "flex flex-col justify-end w-32 h-32 bg-gray-300 flex-shrink-0 rounded-md p-2 pointe-events-auto",
+              "flex flex-col justify-end w-32 bg-gray-300 flex-shrink-0 rounded-md p-2 pointe-events-auto",
               itemToAdd === key && "bg-blue-500"
             )}
             onClick={() => setItemToAdd(key)}

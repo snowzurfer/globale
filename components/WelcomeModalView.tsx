@@ -99,10 +99,10 @@ export const WelcomeModalView: FunctionComponent<Props> = ({
 
               setHasClickedOnce(true);
 
+              await setGoogleTilesAPIKey(apiKey);
               if (!user) {
                 await signInAnonymously(firAuth);
               }
-              await setGoogleTilesAPIKey(apiKey);
 
               setProcessing(false);
             }}

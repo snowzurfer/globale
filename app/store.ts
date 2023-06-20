@@ -1,5 +1,9 @@
 import { create } from "zustand";
-import { onAuthStateChanged } from "firebase/auth";
+import {
+  Unsubscribe,
+  onAuthStateChanged,
+  User as FirUser,
+} from "firebase/auth";
 import { firAuth, firRealtimeDB } from "./firebase";
 import { generateUsername } from "friendly-username-generator";
 import proj4 from "proj4";
@@ -19,8 +23,10 @@ import { SCALE_INVARIANT_SCALE as POINTER_SCALE_INVARIANT_SCALE } from "@/compon
 export interface User {
   id: string;
   username: string;
-  email?: string;
+  email: string | null;
   isAnonymous: boolean;
+  googleTilesAPIKey: string;
+  authorizedByUsers: Record<string, boolean>;
 }
 
 export type SceneItemType = "sphere" | "box" | "model" | "pointer" | "label";
@@ -116,7 +122,8 @@ const HAS_CLICKED_ONCE_KEY = "hasClickedOnce";
 
 export interface GlobaleStore {
   user?: User;
-  setUser: (user: User) => void;
+  userUpdateSubscription?: Unsubscribe;
+  promoteAnonymousUser: (newFirUser: FirUser) => void;
 
   googleTilesAPIKey?: string;
   setGoogleTilesAPIKey: (googleTilesAPIKey?: string) => Promise<void>;
@@ -169,7 +176,21 @@ export interface GlobaleStore {
 
 export const useGlobaleStore = create<GlobaleStore>()((set, get) => ({
   user: undefined,
-  setUser: (user) => set({ user }),
+  firUser: undefined,
+  userUpdateSubscription: undefined,
+  promoteAnonymousUser: async (newFirUser) => {
+    const user = get().user;
+    if (!user) return;
+
+    set({
+      user: {
+        ...user,
+        id: newFirUser.uid,
+        isAnonymous: newFirUser.isAnonymous,
+        email: newFirUser.email,
+      },
+    });
+  },
 
   googleTilesAPIKey: undefined,
   setGoogleTilesAPIKey: async (googleTilesAPIKey) => {
@@ -382,31 +403,71 @@ export const convertGeoToCartesian = (geo: [number, number, number]) => {
 };
 
 // Subscribe to firebase auth changes and update the store
-onAuthStateChanged(firAuth, (user) => {
-  console.log("onAuthStateChanged", user);
-  if (user) {
-    useGlobaleStore.setState({
-      user: {
-        id: user.uid,
-        username: generateUsername(),
-        isAnonymous: user.isAnonymous,
-      },
-    });
-    console.log("Set state for user, user: ", user.uid);
-
+onAuthStateChanged(firAuth, async (firUser) => {
+  console.log("onAuthStateChanged", firUser);
+  if (firUser) {
     // Fetch the google tiles api key
-    const userId = user.uid;
-    const googleTilesAPIKeyRef = ref(
-      firRealtimeDB,
-      `users/${userId}/googleTilesAPIKey`
-    );
-    get(googleTilesAPIKeyRef).then((snapshot) => {
-      const googleTilesAPIKey = snapshot.val();
-      console.log("Got googleTilesAPIKey", googleTilesAPIKey);
-      useGlobaleStore.setState({ googleTilesAPIKey });
+    const userId = firUser.uid;
+
+    let user: User = {
+      id: userId,
+      username: generateUsername(),
+      isAnonymous: firUser.isAnonymous,
+      email: firUser.email,
+      // This works because the logic is such that if the user is new, they will have
+      // also been required to provide an API key before continuing, and the store will have
+      // been updated with the API key before this point.
+      googleTilesAPIKey: useGlobaleStore.getState().googleTilesAPIKey ?? "",
+      authorizedByUsers: {},
+    };
+
+    let googleTilesAPIKey: string | undefined = undefined;
+
+    // Fetch the user's data from firebase. If the user doesn't
+    // exist yet in the DB, create it.
+    const userRef = ref(firRealtimeDB, `users/${userId}`);
+    const userSnapshot = await get(userRef);
+    if (!userSnapshot.exists()) {
+      await set(userRef, user);
+    } else {
+      user = userSnapshot.val();
+      googleTilesAPIKey = user.googleTilesAPIKey;
+      useGlobaleStore.setState({
+        googleTilesAPIKey,
+      });
+    }
+
+    // Listen for updates to the user
+    const unsub = onChildChanged(userRef, (snapshot) => {
+      const updatedUser = snapshot.val();
+      console.log("Updated user", updatedUser);
+      const currentUser = useGlobaleStore.getState().user;
+      useGlobaleStore.setState({
+        user: {
+          ...currentUser,
+          ...updatedUser,
+        },
+      });
     });
+
+    useGlobaleStore.setState({
+      user,
+      userUpdateSubscription: unsub,
+    });
+
+    console.log("Set state for user, user: ", user);
   } else {
-    useGlobaleStore.setState({ user: undefined, googleTilesAPIKey: undefined });
+    // Unsubscribe
+    const unsub = useGlobaleStore.getState().userUpdateSubscription;
+    if (unsub) {
+      unsub();
+    }
+
+    useGlobaleStore.setState({
+      user: undefined,
+      googleTilesAPIKey: undefined,
+      userUpdateSubscription: undefined,
+    });
   }
 });
 
@@ -449,11 +510,16 @@ const updateItemInFirebase = async (item: SceneItem) => {
 };
 
 const deleteItemFromFirebase = async (itemId: SceneItem["id"]) => {
-  remove(ref(firRealtimeDB, `sceneItems/${itemId}`));
+  return remove(ref(firRealtimeDB, `sceneItems/${itemId}`));
 };
 
 const setGoogleTilesAPIKeyToFirebase = async (key: string, userId: string) => {
-  await set(ref(firRealtimeDB, `users/${userId}/googleTilesAPIKey`), key);
+  return set(ref(firRealtimeDB, `users/${userId}/googleTilesAPIKey`), key);
+};
+
+// User management in Firebase
+export const deleteUser = async (userId: string) => {
+  return remove(ref(firRealtimeDB, `users/${userId}`));
 };
 
 // Subscribe to firebase changes and update the store
